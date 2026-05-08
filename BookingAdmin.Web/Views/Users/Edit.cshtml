@@ -1,0 +1,61 @@
+@model BookingAdmin.Web.Models.UserEditViewModel
+@{ ViewData["Title"] = "Edit User"; }
+
+<h2>Edit User</h2>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="mt-4" style="max-width: 500px;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label">Username</label>
+        <input asp-for="Username" class="form-control" readonly />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="NewPassword" class="form-label">New Password</label>
+        <input asp-for="NewPassword" type="password" class="form-control" placeholder="Leave empty to keep current password" />
+        <span asp-validation-for="NewPassword" class="text-danger"></span>
+        <small class="text-muted">Leave empty to keep current password</small>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Role" class="form-label">Role</label>
+        <select asp-for="Role" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.UserRole>)ViewBag.Roles))" class="form-select" required>
+        </select>
+        <span asp-validation-for="Role" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="IsActive" type="checkbox" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Active</label>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Boats Allowed to Manage</label>
+        <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+            @if (ViewBag.Boats != null && ViewBag.Boats.Count > 0)
+            {
+                var selectedBoats = Model.SelectedBoats?.ToList() ?? new List<int>();
+                @foreach (var boat in ViewBag.Boats)
+                {
+                    var isSelected = selectedBoats.Contains(boat.Id);
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="boat_@boat.Id" name="SelectedBoats" value="@boat.Id" @(isSelected ? "checked" : "") />
+                        <label class="form-check-label" for="boat_@boat.Id">@boat.Name</label>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted small">No active boats available</p>
+            }
+        </div>
+        <small class="text-muted">Leave unchecked to allow access to all boats</small>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

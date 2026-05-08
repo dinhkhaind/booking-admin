@@ -1,0 +1,321 @@
+@model BookingAdmin.Web.Models.DashboardViewModel
+@{ ViewData["Title"] = "Dashboard - Báo cáo doanh số"; }
+
+<style>
+    .period-button {
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .period-button.active {
+        background: #0070c0;
+        color: white;
+        border-color: #0070c0;
+    }
+
+    .period-button:hover {
+        background: #f0f0f0;
+    }
+
+    .period-button.active:hover {
+        background: #0070c0;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .report-table {
+        background: white;
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .report-table th {
+        background-color: #0070c0;
+        color: white;
+        font-weight: bold;
+        padding: 12px 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+        font-size: 0.9rem;
+        word-wrap: break-word;
+        min-height: 50px;
+    }
+
+    .report-table td {
+        padding: 10px 8px;
+        border: 1px solid #ddd;
+        text-align: right;
+        font-size: 0.9rem;
+    }
+
+    .report-table td:first-child {
+        text-align: left;
+        font-weight: 500;
+    }
+
+    .report-table tr.total-row {
+        background-color: #d9e1f2;
+        font-weight: bold;
+    }
+
+    .report-table tr.total-row td {
+        background-color: #d9e1f2;
+    }
+
+    .report-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+        padding: 12px;
+        margin-bottom: 1rem;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .report-title.blue {
+        background-color: #0070c0;
+    }
+
+    .report-title.red {
+        background-color: #c00000;
+    }
+
+    .report-title.green {
+        background-color: #00b050;
+    }
+
+    .report-title.cyan {
+        background-color: #00b0e0;
+    }
+
+    .report-container {
+        margin-bottom: 2rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .number-format {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+    }
+
+    .export-btn {
+        padding: 0.5rem 1rem;
+        background: #0070c0;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .export-btn:hover {
+        background: #005a9e;
+    }
+</style>
+
+<div class="dashboard-header">
+    <div>
+        <h2>Báo cáo Doanh số - @Model.BoatName</h2>
+        <p class="text-muted" style="margin-top: 0.5rem;">Từ @Model.PeriodStart.ToString("dd/MM/yyyy") đến @Model.PeriodEnd.ToString("dd/MM/yyyy")</p>
+    </div>
+    <form method="get" style="display: flex; gap: 0.5rem; align-items: center;">
+        <a href="@Url.Action("ExportExcel", new { period = Model.Period })" class="export-btn">
+            <i class="bi bi-download"></i> Export Excel
+        </a>
+    </form>
+</div>
+
+<div style="margin-bottom: 2rem;">
+    <strong>Chọn kỳ báo cáo:</strong>
+    <div style="margin-top: 0.5rem;">
+        <a href="@Url.Action("Index", new { period = "week" })" class="period-button @(Model.Period == "week" ? "active" : "")">
+            Tuần này
+        </a>
+        <a href="@Url.Action("Index", new { period = "month" })" class="period-button @(Model.Period == "month" ? "active" : "")">
+            Tháng này
+        </a>
+        <a href="@Url.Action("Index", new { period = "year" })" class="period-button @(Model.Period == "year" ? "active" : "")">
+            Năm này
+        </a>
+    </div>
+</div>
+
+@if (Model.EmployeeSalesData.Any())
+{
+    <div class="report-container">
+        <div class="report-title blue">Doanh số theo NV Sale</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Nhân viên</th>
+                    @foreach (var label in Model.PeriodLabels)
+                    {
+                        <th>@Html.Raw(label.Replace("\n", "<br/>"))</th>
+                    }
+                    <th style="background-color: #005a9e;">Tổng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.EmployeeSalesData)
+                {
+                    <tr @(row.EmployeeName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
+                        <td>@row.EmployeeName</td>
+                        @foreach (var label in Model.PeriodLabels)
+                        {
+                            var sales = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
+                            <td class="number-format">@sales.ToString("#,##0")</td>
+                        }
+                        <td class="number-format" style="font-weight: bold;">@row.Total.ToString("#,##0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.EmployeeCancellationData.Any())
+{
+    <div class="report-container">
+        <div class="report-title red">Doanh số Huỷ theo NV Sale</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Nhân viên</th>
+                    @foreach (var label in Model.PeriodLabels)
+                    {
+                        <th>@Html.Raw(label.Replace("\n", "<br/>"))</th>
+                    }
+                    <th style="background-color: #9c0006;">Tổng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.EmployeeCancellationData)
+                {
+                    <tr @(row.EmployeeName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
+                        <td>@row.EmployeeName</td>
+                        @foreach (var label in Model.PeriodLabels)
+                        {
+                            var sales = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
+                            <td class="number-format">@sales.ToString("#,##0")</td>
+                        }
+                        <td class="number-format" style="font-weight: bold;">@row.Total.ToString("#,##0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.ChannelSummaryData.Any())
+{
+    <div class="report-container">
+        <div class="report-title green">Tổng kết theo Channel</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Lượng phòng</th>
+                    <th>Doanh số</th>
+                    <th>Lượng khách</th>
+                    <th>Phòng huỷ</th>
+                    <th>Doanh số huỷ</th>
+                    <th>Khách huỷ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.ChannelSummaryData)
+                {
+                    <tr @(row.ChannelName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
+                        <td>@row.ChannelName</td>
+                        <td class="number-format">@row.TotalRooms</td>
+                        <td class="number-format">@row.TotalSales.ToString("#,##0")</td>
+                        <td class="number-format">@row.TotalCustomers</td>
+                        <td class="number-format">@row.CancelledRooms</td>
+                        <td class="number-format">@row.CancelledSales.ToString("#,##0")</td>
+                        <td class="number-format">@row.CancelledCustomers</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.EmployeeLastminData.Any())
+{
+    <div class="report-container">
+        <div class="report-title cyan">Lastmin theo NV Sale</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Nhân viên</th>
+                    <th>Phòng 1 ngày</th>
+                    <th>Doanh số 1 ngày</th>
+                    <th>Phòng 3 ngày</th>
+                    <th>Doanh số 3 ngày</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.EmployeeLastminData)
+                {
+                    <tr @(row.EmployeeName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
+                        <td>@row.EmployeeName</td>
+                        <td class="number-format">@row.Rooms1Day</td>
+                        <td class="number-format">@row.Sales1Day.ToString("#,##0")</td>
+                        <td class="number-format">@row.Rooms3Days</td>
+                        <td class="number-format">@row.Sales3Days.ToString("#,##0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.ChannelLastminData.Any())
+{
+    <div class="report-container">
+        <div class="report-title cyan">Lastmin theo Channel</div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Phòng 1 ngày</th>
+                    <th>Doanh số 1 ngày</th>
+                    <th>Phòng 3 ngày</th>
+                    <th>Doanh số 3 ngày</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.ChannelLastminData)
+                {
+                    <tr @(row.ChannelName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
+                        <td>@row.ChannelName</td>
+                        <td class="number-format">@row.Rooms1Day</td>
+                        <td class="number-format">@row.Sales1Day.ToString("#,##0")</td>
+                        <td class="number-format">@row.Rooms3Days</td>
+                        <td class="number-format">@row.Sales3Days.ToString("#,##0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (!Model.EmployeeSalesData.Any() && !Model.ChannelSummaryData.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Không có dữ liệu báo cáo cho kỳ này
+    </div>
+}

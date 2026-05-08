@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Import Excel";
+    var bookingPath = (string?)ViewContext.HttpContext.RequestServices
+        .GetService<IConfiguration>()?["ExcelImport:BookingFile"];
+    var salePath = (string?)ViewContext.HttpContext.RequestServices
+        .GetService<IConfiguration>()?["ExcelImport:SaleFile"];
+}
+
+<h2>Import Excel</h2>
+
+@if (TempData["ImportResult"] != null)
+{
+    <div class="alert alert-success">@TempData["ImportResult"]</div>
+}
+
+<form asp-action="Run" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">Booking file (Demo-Booking.xlsx)</label>
+        <input name="bookingPath" class="form-control" value="@bookingPath" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Sale tracking file (Demo-Theo dõi tình hình sale.xlsx)</label>
+        <input name="salePath" class="form-control" value="@salePath" />
+    </div>
+    <p class="text-muted small">Existing rows in <code>Bookings</code> and <code>SaleEntries</code> tables will be replaced.</p>
+    <button class="btn btn-warning" type="submit">Run import</button>
+</form>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Booking Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin-layout.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="d-flex vh-100">
+        <!-- Sidebar -->
+        <nav class="sidebar bg-dark text-white p-3">
+            <div class="sidebar-header mb-4">
+                <div class="logo-container text-center">
+                    <i class="bi bi-ship" style="font-size: 2.5rem; color: #ffc107;"></i>
+                    <h5 class="mt-2">Booking Admin</h5>
+                </div>
+            </div>
+
+            <!-- Boat Selection -->
+            <div class="mb-4">
+                <label class="form-label text-muted small mb-2">Select Boat</label>
+                <select id="boatSelect" class="form-select form-select-sm bg-secondary text-white border-0">
+                    <option value="">-- All Boats --</option>
+                </select>
+            </div>
+
+            <ul class="nav nav-pills flex-column gap-2">
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" asp-controller="Dashboard" asp-action="Index">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" asp-controller="Bookings" asp-action="Index">
+                        <i class="bi bi-list-ul"></i>
+                        <span>Bookings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" asp-controller="Bookings" asp-action="Calendar">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Calendar</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" asp-controller="SaleEntries" asp-action="Index">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Sale Tracking</span>
+                    </a>
+                </li>
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Import" asp-action="Index">
+                            <i class="bi bi-cloud-upload"></i>
+                            <span>Import Excel</span>
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Rooms" asp-action="Index">
+                            <i class="bi bi-door-closed"></i>
+                            <span>Rooms</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Users" asp-action="Index">
+                            <i class="bi bi-people"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <!-- Danh mục Section -->
+            @if (User.IsInRole("Admin"))
+            {
+                <hr class="my-3" />
+                <p class="text-muted small px-2">DANH MỤC</p>
+                <ul class="nav nav-pills flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Boats" asp-action="Index">
+                            <i class="bi bi-ship"></i>
+                            <span>Boats</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Currencies" asp-action="Index">
+                            <i class="bi bi-currency-dollar"></i>
+                            <span>Currencies</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="ChannelTypes" asp-action="Index">
+                            <i class="bi bi-tag"></i>
+                            <span>Channel Types</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Channels" asp-action="Index">
+                            <i class="bi bi-chat-dots"></i>
+                            <span>Channels</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-2" asp-controller="Employees" asp-action="Index">
+                            <i class="bi bi-person-badge"></i>
+                            <span>Employees</span>
+                        </a>
+                    </li>
+                </ul>
+            }
+            <ul class="nav nav-pills flex-column gap-2">
+            </ul>
+            <hr class="my-4" />
+            <p class="text-muted small text-center">© 2026 Booking Admin</p>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="flex-grow-1 d-flex flex-column overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white border-bottom shadow-sm py-3 px-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">@ViewData["Title"]</h4>
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="text-muted small">
+                            <i class="bi bi-clock"></i>
+                            <span id="current-time"></span>
+                        </div>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle"></i> @User.Identity.Name
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><span class="dropdown-item-text">Role: <strong>@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "N/A")</strong></span></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main role="main" class="flex-grow-1 overflow-auto p-4">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle"></i> @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @RenderBody()
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-light border-top py-3 px-4 text-center text-muted small">
+                <p class="mb-0">Hệ thống quản trị booking tàu du lịch &middot; v1.0</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString('vi-VN');
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Load boats and handle selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const boatSelect = document.getElementById('boatSelect');
+
+            // Load boats
+            fetch('/Home/GetBoats')
+                .then(response => response.json())
+                .then(boats => {
+                    boats.forEach(boat => {
+                        const option = document.createElement('option');
+                        option.value = boat.id;
+                        option.textContent = boat.name;
+                        boatSelect.appendChild(option);
+                    });
+
+                    // Restore selected boat from session
+                    const selectedBoatId = sessionStorage.getItem('selectedBoatId');
+                    if (selectedBoatId) {
+                        boatSelect.value = selectedBoatId;
+                    }
+                });
+
+            // Handle boat selection
+            boatSelect.addEventListener('change', function() {
+                const boatId = this.value;
+                sessionStorage.setItem('selectedBoatId', boatId);
+
+                // Save to server session
+                fetch('/Home/SetSelectedBoat?boatId=' + boatId, { method: 'POST' })
+                    .then(() => {
+                        window.location.reload();
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

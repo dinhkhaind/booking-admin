@@ -1,0 +1,118 @@
+@model IEnumerable<BookingAdmin.Web.Models.SaleEntry>
+@{
+    ViewData["Title"] = "Sale Tracking";
+    var f = (dynamic)ViewBag.Filter;
+    int total = ViewBag.Total;
+    decimal totalRevenue = ViewBag.TotalRevenue;
+    int page = ViewBag.Page;
+    int pageSize = ViewBag.PageSize;
+    int totalPages = (int)Math.Ceiling(total / (double)pageSize);
+    var sales = (List<string>)ViewBag.Sales;
+    var sources = (List<string>)ViewBag.Sources;
+    var statuses = (List<string>)ViewBag.Statuses;
+}
+
+<h2>Sale Tracking <small class="text-muted">(@total rows · @totalRevenue.ToString("N0") VND)</small></h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="sale" class="form-select">
+            <option value="">Sale —</option>
+            @foreach (var s in sales)
+            {
+                <option value="@s" selected="@(f.sale == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="source" class="form-select">
+            <option value="">Source —</option>
+            @foreach (var s in sources)
+            {
+                <option value="@s" selected="@(f.source == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">Status —</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@s" selected="@(f.status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <input name="year" value="@f.year" placeholder="Year" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <select name="month" class="form-select">
+            <option value="">Month —</option>
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m" selected="@(f.month == m)">T@m</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto flex-grow-1">
+        <input name="q" value="@f.q" placeholder="Search booking code / agency" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" type="submit">Filter</button>
+        <a class="btn btn-secondary" asp-action="Index">Reset</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Tracking</th>
+                <th>Booking code</th>
+                <th>Agency</th>
+                <th>Source</th>
+                <th>Sale</th>
+                <th class="text-end">Price</th>
+                <th>Check-in</th>
+                <th>Itinerary</th>
+                <th>Rooms</th>
+                <th>Guests</th>
+                <th>Car</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@(s.TrackingDate?.ToString("yyyy-MM-dd"))</td>
+                    <td>@s.BookingCode</td>
+                    <td>@s.Agency</td>
+                    <td>@s.Source</td>
+                    <td>@s.Sale</td>
+                    <td class="text-end">@(s.Price.HasValue ? s.Price.Value.ToString("N0") : "")</td>
+                    <td>@(s.CheckInDate?.ToString("yyyy-MM-dd"))</td>
+                    <td>@s.Itinerary</td>
+                    <td>@s.RoomQty</td>
+                    <td>@s.GuestQty</td>
+                    <td>@s.CompanyCar</td>
+                    <td>@s.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int p = Math.Max(1, page - 3); p <= Math.Min(totalPages, page + 3); p++)
+            {
+                <li class="page-item @(p == page ? "active" : "")">
+                    <a class="page-link" href="?sale=@f.sale&source=@f.source&status=@f.status&year=@f.year&month=@f.month&q=@f.q&page=@p">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

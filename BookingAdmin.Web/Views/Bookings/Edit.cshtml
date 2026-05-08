@@ -1,0 +1,280 @@
+@model BookingAdmin.Web.Models.Booking
+@{ ViewData["Title"] = "Edit Booking"; }
+
+<h2>Edit Booking</h2>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="mt-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CreatedAt" />
+
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- Left Column -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Booking Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="BoatId" class="form-label">Boat</label>
+                            <select asp-for="BoatId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.Boat>)ViewBag.Boats, "Id", "Name"))" class="form-select" id="boatSelect" required>
+                                <option value="">-- Select Boat --</option>
+                            </select>
+                            <span asp-validation-for="BoatId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ChannelId" class="form-label">Channel</label>
+                            <select asp-for="ChannelId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.Channel>)ViewBag.Channels, "Id", "Name"))" class="form-select" required>
+                                <option value="">-- Select Channel --</option>
+                            </select>
+                            <span asp-validation-for="ChannelId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="BookingCode" class="form-label">Booking Code</label>
+                            <input asp-for="BookingCode" class="form-control" />
+                            <span asp-validation-for="BookingCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CustomerName" class="form-label">Customer Name</label>
+                            <input asp-for="CustomerName" class="form-control" />
+                            <span asp-validation-for="CustomerName" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EmployeeId" class="form-label">Employee (Optional)</label>
+                        <select asp-for="EmployeeId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.Employee>)ViewBag.Employees, "Id", "FullName"))" class="form-select">
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">Status</label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Mới" selected="@(Model.Status == "Mới")">Mới</option>
+                            <option value="Xác nhận" selected="@(Model.Status == "Xác nhận")">Xác nhận</option>
+                            <option value="Huỷ" selected="@(Model.Status == "Huỷ")">Huỷ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dates Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CheckIn" class="form-label">Check-in</label>
+                            <input asp-for="CheckIn" type="date" class="form-control" required />
+                            <span asp-validation-for="CheckIn" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CheckOut" class="form-label">Check-out</label>
+                            <input asp-for="CheckOut" type="date" class="form-control" required />
+                            <span asp-validation-for="CheckOut" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EntryDate" class="form-label">Entry Date</label>
+                        <input asp-for="EntryDate" type="date" class="form-control" required />
+                        <span asp-validation-for="EntryDate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Pricing</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="Price" class="form-label">Price</label>
+                            <input asp-for="Price" type="number" step="0.01" class="form-control" required />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="CurrencyId" class="form-label">Currency</label>
+                            <select asp-for="CurrencyId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.Currency>)ViewBag.Currencies, "Id", "Code"))" class="form-select" required>
+                                <option value="">-- Select --</option>
+                            </select>
+                            <span asp-validation-for="CurrencyId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <!-- Transfer Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Transfer</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 form-check">
+                        <input asp-for="TransferUsed" type="checkbox" class="form-check-input" id="transferUsedCheck" />
+                        <label asp-for="TransferUsed" class="form-check-label">Transfer Used</label>
+                    </div>
+
+                    <div id="transferDetails" style="display: @(Model.TransferUsed ? "block" : "none")">
+                        <div class="mb-3">
+                            <label asp-for="PickupPoint" class="form-label">Pickup Point</label>
+                            <input asp-for="PickupPoint" class="form-control" />
+                            <span asp-validation-for="PickupPoint" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DropoffPoint" class="form-label">Dropoff Point</label>
+                            <input asp-for="DropoffPoint" class="form-control" />
+                            <span asp-validation-for="DropoffPoint" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guests Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Guests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AdultCount" class="form-label">Adults</label>
+                            <input asp-for="AdultCount" type="number" class="form-control" required />
+                            <span asp-validation-for="AdultCount" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ChildCount" class="form-label">Children</label>
+                            <input asp-for="ChildCount" type="number" class="form-control" required />
+                            <span asp-validation-for="ChildCount" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Notes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Note" class="form-label">Notes</label>
+                        <textarea asp-for="Note" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rooms Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Select Rooms</h5>
+                </div>
+                <div class="card-body">
+                    <div id="roomsList" class="mb-3">
+                        <p class="text-muted small">Loading rooms...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save Booking</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedRoomIds = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.SelectedRoomIds ?? new List<int>()));
+
+        // Handle Transfer checkbox
+        const transferUsedCheck = document.getElementById('transferUsedCheck');
+        const transferDetails = document.getElementById('transferDetails');
+
+        transferUsedCheck.addEventListener('change', function() {
+            transferDetails.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Handle Boat selection for rooms
+        const boatSelect = document.getElementById('boatSelect');
+        const roomsList = document.getElementById('roomsList');
+
+        function loadRooms() {
+            if (!boatSelect.value) {
+                roomsList.innerHTML = '<p class="text-muted small">Please select a boat first</p>';
+                return;
+            }
+
+            fetch('/Bookings/GetRoomsByBoat?boatId=' + boatSelect.value)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        roomsList.innerHTML = '<p class="text-muted small">No rooms available for this boat</p>';
+                        return;
+                    }
+
+                    let html = '<div class="list-group">';
+                    data.forEach((room, index) => {
+                        const isChecked = selectedRoomIds.includes(room.id);
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="checkbox" class="form-check-input room-checkbox" data-index="${index}" data-max="${room.totalRooms}" ${isChecked ? 'checked' : ''}>
+                                    <label class="flex-grow-1 mb-0">
+                                        <strong>${room.roomCode}</strong> - ${room.roomName}
+                                    </label>
+                                    <input type="hidden" name="roomQuantities[${index}].RoomId" value="${room.id}">
+                                    <input type="number" name="roomQuantities[${index}].Quantity" class="form-control room-quantity"
+                                           min="1" max="${room.totalRooms}" value="1" style="width: 80px; display: ${isChecked ? 'block' : 'none'};">
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    roomsList.innerHTML = html;
+
+                    // Add event listeners to checkboxes
+                    document.querySelectorAll('.room-checkbox').forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            const quantityInput = this.parentElement.parentElement.querySelector('.room-quantity');
+                            if (this.checked) {
+                                quantityInput.style.display = 'block';
+                            } else {
+                                quantityInput.style.display = 'none';
+                                quantityInput.value = '1';
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    roomsList.innerHTML = '<p class="text-danger small">Error loading rooms</p>';
+                });
+        }
+
+        boatSelect.addEventListener('change', loadRooms);
+
+        // Load rooms on page load
+        loadRooms();
+    });
+</script>

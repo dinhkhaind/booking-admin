@@ -1,0 +1,38 @@
+@model IEnumerable<BookingAdmin.Web.Models.Room>
+@{ ViewData["Title"] = "Rooms"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Rooms</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus"></i> Add Room
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Bookings</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var room in Model)
+            {
+                <tr>
+                    <td><strong>@room.RoomCode</strong></td>
+                    <td>@room.RoomName</td>
+                    <td>@room.Location</td>
+                    <td><span class="badge bg-info">@room.BookingRooms.Count</span></td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

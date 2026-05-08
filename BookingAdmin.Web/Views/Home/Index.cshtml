@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Booking Admin</h1>
+    <p class="lead">Quản trị booking phòng tàu du lịch và theo dõi hiệu suất sale.</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Bookings</h5>
+                <p class="card-text">Lịch đặt phòng theo tháng cho mỗi tàu.</p>
+                <a asp-controller="Bookings" asp-action="Index" class="btn btn-primary">Xem</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Sale Tracking</h5>
+                <p class="card-text">Theo dõi doanh số, tình trạng booking theo từng sale.</p>
+                <a asp-controller="SaleEntries" asp-action="Index" class="btn btn-primary">Xem</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Import Excel</h5>
+                <p class="card-text">Nạp dữ liệu từ 2 file xlsx vào SQL Server.</p>
+                <a asp-controller="Import" asp-action="Index" class="btn btn-warning">Import</a>
+            </div>
+        </div>
+    </div>
+</div>

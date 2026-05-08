@@ -1,0 +1,53 @@
+@model BookingAdmin.Web.Models.Room
+@{ ViewData["Title"] = "Add Room"; }
+
+<h2>Add Room</h2>
+
+<form asp-action="Create" method="post" class="mt-4" style="max-width: 600px;">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="BoatId" class="form-label">Boat</label>
+        <select asp-for="BoatId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.Boat>)ViewBag.Boats, "Id", "Name"))" class="form-select" required>
+            <option value="">-- Select Boat --</option>
+        </select>
+        <span asp-validation-for="BoatId" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="RoomCode" class="form-label">Room Code</label>
+            <input asp-for="RoomCode" class="form-control" required />
+            <span asp-validation-for="RoomCode" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="RoomName" class="form-label">Room Name</label>
+            <input asp-for="RoomName" class="form-control" required />
+            <span asp-validation-for="RoomName" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="TotalRooms" class="form-label">Total Rooms</label>
+            <input asp-for="TotalRooms" type="number" class="form-control" required />
+            <span asp-validation-for="TotalRooms" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Capacity" class="form-label">Capacity (guests)</label>
+            <input asp-for="Capacity" type="number" class="form-control" required />
+            <span asp-validation-for="Capacity" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Location" class="form-label">Location</label>
+        <input asp-for="Location" class="form-control" />
+        <span asp-validation-for="Location" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

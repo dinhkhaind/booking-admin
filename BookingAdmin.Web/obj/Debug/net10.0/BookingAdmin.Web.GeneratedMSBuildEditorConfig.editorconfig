@@ -1,0 +1,211 @@
+is_global = true
+build_property.TargetFramework = net10.0
+build_property.TargetFramework = net10.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v10.0
+build_property.RootNamespace = BookingAdmin.Web
+build_property.RootNamespace = BookingAdmin.Web
+build_property.ProjectDir = /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 10.0
+build_property.EnableCodeStyleSeverity = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Account/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9BY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQWNjb3VudC9Mb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Boats/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9hdHMvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Boats/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9hdHMvRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Boats/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9hdHMvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Boats/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9hdHMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Bookings/Calendar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9va2luZ3MvQ2FsZW5kYXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Bookings/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9va2luZ3MvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Bookings/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9va2luZ3MvRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Bookings/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9va2luZ3MvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Bookings/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQm9va2luZ3MvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Channels/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbHMvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Channels/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbHMvRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Channels/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbHMvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Channels/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbHMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/ChannelTypes/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbFR5cGVzL0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/ChannelTypes/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbFR5cGVzL0RlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/ChannelTypes/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbFR5cGVzL0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/ChannelTypes/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ2hhbm5lbFR5cGVzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Currencies/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ3VycmVuY2llcy9DcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Currencies/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ3VycmVuY2llcy9EZWxldGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Currencies/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ3VycmVuY2llcy9FZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Currencies/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvQ3VycmVuY2llcy9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Dashboard/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRGFzaGJvYXJkL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Employees/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRW1wbG95ZWVzL0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Employees/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRW1wbG95ZWVzL0RlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Employees/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRW1wbG95ZWVzL0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Employees/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvRW1wbG95ZWVzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9Qcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Import/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSW1wb3J0L0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Rooms/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbXMvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Rooms/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbXMvRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Rooms/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbXMvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Rooms/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbXMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/SaleEntries/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2FsZUVudHJpZXMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Users/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlcnMvQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Users/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlcnMvRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Users/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlcnMvRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Users/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlcnMvSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-aq4goiy5h1
