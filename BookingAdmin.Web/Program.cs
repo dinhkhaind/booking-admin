@@ -14,7 +14,7 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<DashboardService>();
