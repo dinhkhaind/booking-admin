@@ -1,0 +1,8 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "dotnet BookingAdmin.Web/BookingAdmin.Web.dll --urls http://0.0.0.0:$PORT"
+  }
+}
