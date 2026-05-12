@@ -11,6 +11,7 @@ public class RoomScheduleViewModel
     public decimal TotalRevenue { get; set; }
     public int ActiveBookingCount { get; set; }
     public int LastMinuteBookingCount { get; set; }
+    public string RevenueByCurrency { get; set; } = string.Empty;
 
     public List<RoomScheduleRow> Rows { get; set; } = new();
     public int DaysInMonth { get; set; }

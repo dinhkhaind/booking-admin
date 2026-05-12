@@ -351,10 +351,10 @@
             document.getElementById('AdultCount').value = booking.adults || 1;
             document.getElementById('ChildCount').value = booking.children || 0;
             document.getElementById('InfantCount').value = booking.infants || 0;
-            document.getElementById('CheckIn').value = booking.checkIn || '';
+            document.getElementById('CheckIn').value = booking.checkInInput || '';
             document.getElementById('PackageId').value = booking.packageId || '';
-            document.getElementById('CheckOut').value = booking.checkOut || '';
-            document.getElementById('EntryDate').value = booking.entryDate || '';
+            document.getElementById('CheckOut').value = booking.checkOutInput || '';
+            document.getElementById('EntryDate').value = booking.entryDateInput || '';
             document.getElementById('BoatId').value = booking.boatId || '';
             document.getElementById('RoomTypeId').value = booking.roomTypeId || '';
             document.getElementById('roomId').value = booking.roomId || '';
@@ -373,6 +373,9 @@
             if (booking.boatId) {
                 await loadRoomTypes();
             }
+
+            // Verify checkout calculation based on CheckIn + PackageId
+            await calculateCheckOut();
 
         } catch (error) {
             console.error('Error loading booking:', error);

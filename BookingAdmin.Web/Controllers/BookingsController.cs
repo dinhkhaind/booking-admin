@@ -66,6 +66,18 @@ public class BookingsController : BaseController
         var currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
         var packages = await _db.Packages.Where(p => p.IsActive).OrderBy(p => p.Code).ToListAsync();
 
+        // Calculate revenue by currency for all bookings matching the filters (not just current page)
+        var revenueByCurrencyDict = await query
+            .Include(b => b.Currency)
+            .GroupBy(b => b.Currency!.Code)
+            .Where(g => g.Sum(b => b.TotalPrice) > 0)
+            .OrderBy(g => g.Key)
+            .Select(g => new { Currency = g.Key, Revenue = g.Sum(b => b.TotalPrice) })
+            .ToListAsync();
+
+        var revenueByCurrencyStr = string.Join(" | ", revenueByCurrencyDict
+            .Select(kvp => $"{kvp.Currency}: {kvp.Revenue:N0}"));
+
         // Compose view model
         var vm = new BookingListViewModel
         {
@@ -79,6 +91,7 @@ public class BookingsController : BaseController
             PageSize = PageSize,
             TotalCount = total,
             Bookings = items,
+            RevenueByCurrency = revenueByCurrencyStr,
             Boats = boats,
             RoomTypes = roomTypes,
             Statuses = statuses,

@@ -20,6 +20,14 @@
     }
 </div>
 
+<!-- Revenue Metric -->
+@if (!string.IsNullOrEmpty(Model.RevenueByCurrency))
+{
+    <div class="alert alert-info mb-4">
+        <strong>Doanh Thu:</strong> @Html.Raw(Model.RevenueByCurrency)
+    </div>
+}
+
 <!-- Filter Bar -->
 <div class="card mb-4">
     <div class="card-body">

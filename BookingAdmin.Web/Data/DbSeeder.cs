@@ -71,7 +71,7 @@ public static class DbSeeder
         var admin = new User
         {
             Username = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Khai@1234"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Khaivd@1234"),
             Role = UserRole.Admin,
             IsActive = true
         };

@@ -80,7 +80,16 @@
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="text-muted">Doanh Thu</h5>
-                <h3 class="text-success">@Model.TotalRevenue.ToString("C0")</h3>
+                <p class="text-success" style="font-size: 0.95rem; line-height: 1.4; margin: 0;">
+                    @if (!string.IsNullOrEmpty(Model.RevenueByCurrency))
+                    {
+                        @Html.Raw(Model.RevenueByCurrency)
+                    }
+                    else
+                    {
+                        <span>0</span>
+                    }
+                </p>
             </div>
         </div>
     </div>

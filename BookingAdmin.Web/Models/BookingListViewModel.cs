@@ -16,6 +16,9 @@ public class BookingListViewModel
 
     public List<Booking> Bookings { get; set; } = new();
 
+    // Metrics
+    public string RevenueByCurrency { get; set; } = string.Empty;
+
     // Filter bar dropdowns
     public List<Boat> Boats { get; set; } = new();
     public List<RoomType> RoomTypes { get; set; } = new();

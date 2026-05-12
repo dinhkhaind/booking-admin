@@ -134,6 +134,7 @@ public class RoomScheduleService
             TotalRevenue = metrics.revenue,
             ActiveBookingCount = metrics.activeCount,
             LastMinuteBookingCount = metrics.lastMinCount,
+            RevenueByCurrency = metrics.revenueByCurrency,
             Rows = rows,
             DaysInMonth = daysInMonth,
             Boats = boats,
@@ -145,7 +146,7 @@ public class RoomScheduleService
         };
     }
 
-    private async Task<(double occupancyRate, decimal revenue, int activeCount, int lastMinCount)> GetMetricsAsync(
+    private async Task<(double occupancyRate, decimal revenue, int activeCount, int lastMinCount, string revenueByCurrency)> GetMetricsAsync(
         int boatId, DateOnly monthStart, DateOnly monthEnd, List<BookingRoom> bookingRooms)
     {
         var activeBookings = await _db.Bookings
@@ -154,6 +155,7 @@ public class RoomScheduleService
                 && b.CheckIn <= monthEnd
                 && b.StatusId != CancelledStatusId)
             .Include(b => b.BookingRooms)
+            .Include(b => b.Currency)
             .ToListAsync();
 
         var totalRoomDays = await _db.Rooms
@@ -165,10 +167,24 @@ public class RoomScheduleService
 
         var revenue = activeBookings.Sum(b => b.TotalPrice);
 
+        // Calculate revenue by currency
+        var revenueByCurrencyDict = activeBookings
+            .GroupBy(b => b.Currency?.Code ?? "Unknown")
+            .Where(g => g.Sum(b => b.TotalPrice) > 0)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(b => b.TotalPrice)
+            )
+            .OrderBy(kvp => kvp.Key)
+            .ToList();
+
+        var revenueByCurrencyStr = string.Join(" | ", revenueByCurrencyDict
+            .Select(kvp => $"{kvp.Key}: {kvp.Value:N0}"));
+
         var lastMinBookings = activeBookings
             .Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.CreatedAt).TotalDays < 3)
             .Count();
 
-        return (occupancyRate, revenue, activeBookings.Count, lastMinBookings);
+        return (occupancyRate, revenue, activeBookings.Count, lastMinBookings, revenueByCurrencyStr);
     }
 }
