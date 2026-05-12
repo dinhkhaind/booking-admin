@@ -14,6 +14,7 @@
             <tr>
                 <th>Code</th>
                 <th>Name</th>
+                <th>Room Type</th>
                 <th>Location</th>
                 <th>Bookings</th>
                 <th class="text-end">Actions</th>
@@ -25,6 +26,16 @@
                 <tr>
                     <td><strong>@room.RoomCode</strong></td>
                     <td>@room.RoomName</td>
+                    <td>
+                        @if (room.RoomType != null)
+                        {
+                            <span class="badge bg-secondary">@room.RoomType.Name</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">N/A</span>
+                        }
+                    </td>
                     <td>@room.Location</td>
                     <td><span class="badge bg-info">@room.BookingRooms.Count</span></td>
                     <td class="text-end">

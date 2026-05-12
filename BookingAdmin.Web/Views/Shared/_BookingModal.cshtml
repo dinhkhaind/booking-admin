@@ -1,0 +1,583 @@
+@model RoomScheduleViewModel
+
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tạo Booking Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <!-- Row 1: Channel -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Tên Đại Lý</label>
+                            <select id="ChannelId" name="ChannelId" class="form-select" required>
+                                <option value="">-- Chọn Đại Lý --</option>
+                                @foreach (var channel in Model.Channels)
+                                {
+                                    <option value="@channel.Id">@channel.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Code Đại Lý</label>
+                            <input type="text" id="AgencyBookingCode" name="AgencyBookingCode" class="form-control" />
+                        </div>
+                    </div>
+
+                    <!-- Row 2: System Code -->
+                    <div class="mb-3">
+                        <label class="form-label">Code Hệ Thống</label>
+                        <input type="text" id="SystemCode" class="form-control readonly-field" readonly />
+                    </div>
+
+                    <!-- Row 3: Customer Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Tên Khách Đại Diện</label>
+                        <input type="text" id="CustomerName" name="CustomerName" class="form-control" required />
+                    </div>
+
+                    <!-- Row 4: Guest Count -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Người Lớn</label>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="-1">-</button>
+                                <input type="number" id="AdultCount" name="AdultCount" class="form-control text-center" value="1" min="0" />
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="1">+</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Trẻ Em (5-10)</label>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="-1">-</button>
+                                <input type="number" id="ChildCount" name="ChildCount" class="form-control text-center" value="0" min="0" />
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="1">+</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sơ Sinh (<5)</label>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="-1">-</button>
+                                <input type="number" id="InfantCount" name="InfantCount" class="form-control text-center" value="0" min="0" />
+                                <button type="button" class="btn btn-outline-secondary guest-counter" data-change="1">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Check-in, Check-out & Package -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Ngày Check-in</label>
+                            <input type="date" id="CheckIn" name="CheckIn" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gói Lưu Trú</label>
+                            <select id="PackageId" name="PackageId" class="form-select" required>
+                                @foreach (var pkg in Model.Packages)
+                                {
+                                    <option value="@pkg.Id" data-days="@pkg.AddedDate">@pkg.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ngày Check-out</label>
+                            <input type="date" id="CheckOut" name="CheckOut" class="form-control readonly-field" readonly />
+                        </div>
+                    </div>
+
+
+                    <!-- Row 6: Boat, Room Type, Room -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tàu</label>
+                            <select id="BoatId" name="BoatId" class="form-select" required>
+                                <option value="">-- Chọn Tàu --</option>
+                                @foreach (var boat in Model.Boats)
+                                {
+                                    <option value="@boat.Id">@boat.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Loại Phòng</label>
+                            <select id="RoomTypeId" name="RoomTypeId" class="form-select">
+                                <option value="">-- Chọn Loại Phòng --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Số Phòng</label>
+                            <select id="roomId" name="RoomId" class="form-select">
+                                <option value="">-- Chọn Phòng --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 7: Price & Currency -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Giá Booking</label>
+                            <input type="number" id="TotalPrice" name="TotalPrice" class="form-control" step="0.01" min="0" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tiền Tệ</label>
+                            <select id="CurrencyId" name="CurrencyId" class="form-select" required>
+                                <option value="">-- Chọn --</option>
+                                @foreach (var curr in Model.Currencies)
+                                {
+                                    <option value="@curr.Id" data-is-default="@curr.IsDefault.ToString().ToLower()">@curr.Code@(curr.IsDefault ? " (mặc định)" : "")</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 8: Transfer Service -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" id="HasTransferService" name="HasTransferService" class="form-check-input" />
+                        <label class="form-check-label" for="HasTransferService">
+                            Dịch Vụ Xe Đưa Đón
+                        </label>
+                    </div>
+
+                    <!-- Row 8b: Transfer Service Details (conditionally shown) -->
+                    <div id="transferServiceDetails" style="display: none;">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Điểm Đón</label>
+                                <input type="text" id="PickupPoint" name="PickupPoint" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Điểm Trả</label>
+                                <input type="text" id="DropoffPoint" name="DropoffPoint" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 9: Notes -->
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú đặc biệt (kiêng chay, dị ứng, yêu cầu...)</label>
+                        <textarea id="Note" name="Note" class="form-control" rows="3" placeholder="Nhập nội dung khách yêu cầu..."></textarea>
+                    </div>
+
+                    <!-- Internal Info Section -->
+                    <hr class="my-4" />
+                    <h6 class="mb-3 text-muted">Thông Tin Nội Bộ</h6>
+
+                    <!-- Row 10: Employee, Entry Date, Entered By User -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Nhân Viên Nhận Booking</label>
+                            <select id="EmployeeId" name="EmployeeId" class="form-select">
+                                <option value="">-- Chọn Nhân Viên --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ngày Nhập Hệ Thống</label>
+                            <input type="date" id="EntryDate" name="EntryDate" class="form-control readonly-field" readonly />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Người Nhập Hệ Thống</label>
+                            <input type="text" id="EnteredByUser" class="form-control readonly-field" readonly />
+                            <input type="hidden" id="EnteredByUserId" name="EnteredByUserId" />
+                        </div>
+                    </div>
+
+                    <!-- Status (hidden, defaults to 1 = Pending) -->
+                    <input type="hidden" id="StatusId" name="StatusId" value="1" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="saveBooking()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variable to track modal initialization data
+    let modalInitData = { boatId: null, date: null, bookingId: null };
+
+    // Function to open modal with boat and date (for creating new booking)
+    function openModal(boatId, date) {
+        modalInitData.boatId = boatId;
+        modalInitData.date = date;
+        modalInitData.bookingId = null;
+        const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+        modal.show();
+    }
+
+    // Function to open modal for editing booking
+    async function openEditModal(bookingId) {
+        modalInitData.bookingId = bookingId;
+        modalInitData.boatId = null;
+        modalInitData.date = null;
+        const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+        modal.show();
+    }
+
+    // Initialize modal when shown
+    document.getElementById('bookingModal').addEventListener('show.bs.modal', async function () {
+        // Determine if in edit mode
+        const isEditMode = !!modalInitData.bookingId;
+
+        // Load employees list
+        await loadEmployees();
+
+        // If editing, load booking data
+        if (isEditMode) {
+            await loadBookingData(modalInitData.bookingId);
+            // Change button text to "Cập nhật booking"
+            document.querySelector('.modal-footer .btn-primary').textContent = 'Cập nhật booking';
+        } else {
+            // Create mode - set defaults
+            // Set EntryDate to current date
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            document.getElementById('EntryDate').value = `${year}-${month}-${day}`;
+
+            // Set CheckIn date if provided
+            if (modalInitData.date) {
+                document.getElementById('CheckIn').value = modalInitData.date;
+            }
+
+            // Pre-select boat if provided and load room types
+            if (modalInitData.boatId) {
+                const boatSelect = document.getElementById('BoatId');
+                boatSelect.value = modalInitData.boatId;
+                await loadRoomTypes();
+            } else {
+                // Clear room type and room if no boat is selected
+                document.getElementById('RoomTypeId').innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
+                document.getElementById('roomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            }
+
+            // Auto-select first package if none selected
+            const packageSelect = document.getElementById('PackageId');
+            if (!packageSelect.value && packageSelect.options.length > 0) {
+                packageSelect.value = packageSelect.options[1]?.value || packageSelect.options[0]?.value;
+            }
+
+            // Auto-select default currency
+            const currencySelect = document.getElementById('CurrencyId');
+            const defaultOption = Array.from(currencySelect.options).find(opt => opt.dataset.isDefault === 'true');
+            if (defaultOption) {
+                currencySelect.value = defaultOption.value;
+            }
+
+            // Trigger checkout calculation with current values
+            await calculateCheckOut();
+
+            // Generate system code
+            generateSystemCode();
+
+            // Change button text back to "Lưu booking"
+            document.querySelector('.modal-footer .btn-primary').textContent = 'Lưu booking';
+        }
+
+        // Clear modal init data
+        modalInitData = { boatId: null, date: null, bookingId: null };
+    });
+
+    // Generate system code from boat name only
+    function generateSystemCode() {
+        const boatSelect = document.getElementById('BoatId');
+        const boatText = boatSelect.options[boatSelect.selectedIndex]?.text || '';
+
+        if (!boatText || boatText === '-- Chọn Tàu --') {
+            document.getElementById('SystemCode').value = '';
+            return;
+        }
+
+        // Extract first letters from each word in boat name
+        const prefix = boatText
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase())
+            .join('');
+
+        const now = new Date();
+        const yyyyMMdd = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        const HHmmss = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+
+        const code = `${prefix}-${yyyyMMdd}-${HHmmss}`;
+        document.getElementById('SystemCode').value = code;
+    }
+
+    // Load employees list and set current user
+    async function loadEmployees() {
+        try {
+            const response = await fetch('/api/employees');
+            const employees = await response.json();
+
+            const employeeSelect = document.getElementById('EmployeeId');
+            employeeSelect.innerHTML = '<option value="">-- Chọn Nhân Viên --</option>';
+            employees.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp.id;
+                option.textContent = emp.fullName;
+                employeeSelect.appendChild(option);
+            });
+
+            // Set current user info from page (if available)
+            const userElement = document.querySelector('[data-current-user]');
+            if (userElement) {
+                const userName = userElement.getAttribute('data-current-user');
+                const userId = userElement.getAttribute('data-current-user-id');
+                document.getElementById('EnteredByUser').value = userName;
+                document.getElementById('EnteredByUserId').value = userId;
+            }
+        } catch (error) {
+            console.error('Error loading employees:', error);
+        }
+    }
+
+    // Load booking data for editing
+    async function loadBookingData(bookingId) {
+        try {
+            const response = await fetch(`/lich-phong/api/bookings/${bookingId}`);
+            if (!response.ok) throw new Error('Failed to load booking');
+
+            const booking = await response.json();
+
+            // Pre-fill all fields
+            document.getElementById('ChannelId').value = booking.channelId || '';
+            document.getElementById('AgencyBookingCode').value = booking.agencyBookingCode || '';
+            document.getElementById('SystemCode').value = booking.systemCode || '';
+            document.getElementById('CustomerName').value = booking.customerName || '';
+            document.getElementById('AdultCount').value = booking.adults || 1;
+            document.getElementById('ChildCount').value = booking.children || 0;
+            document.getElementById('InfantCount').value = booking.infants || 0;
+            document.getElementById('CheckIn').value = booking.checkIn || '';
+            document.getElementById('PackageId').value = booking.packageId || '';
+            document.getElementById('CheckOut').value = booking.checkOut || '';
+            document.getElementById('EntryDate').value = booking.entryDate || '';
+            document.getElementById('BoatId').value = booking.boatId || '';
+            document.getElementById('RoomTypeId').value = booking.roomTypeId || '';
+            document.getElementById('roomId').value = booking.roomId || '';
+            document.getElementById('TotalPrice').value = booking.totalPrice || '';
+            document.getElementById('CurrencyId').value = booking.currencyId || '';
+            document.getElementById('HasTransferService').checked = booking.hasTransferService || false;
+            document.getElementById('PickupPoint').value = booking.pickupPoint || '';
+            document.getElementById('DropoffPoint').value = booking.dropoffPoint || '';
+            document.getElementById('EmployeeId').value = booking.employeeId || '';
+            document.getElementById('Note').value = booking.note || '';
+
+            // Show transfer service details if applicable
+            document.getElementById('transferServiceDetails').style.display = booking.hasTransferService ? 'block' : 'none';
+
+            // Load room types based on boat
+            if (booking.boatId) {
+                await loadRoomTypes();
+            }
+
+        } catch (error) {
+            console.error('Error loading booking:', error);
+            alert('Lỗi tải dữ liệu booking');
+        }
+    }
+
+    // Load room types when boat changes
+    async function loadRoomTypes() {
+        const boatId = document.getElementById('BoatId').value;
+        const roomTypeSelect = document.getElementById('RoomTypeId');
+
+        if (!boatId) {
+            roomTypeSelect.innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
+            document.getElementById('roomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/roomtypes?boatId=${boatId}`);
+            const roomTypes = await response.json();
+
+            roomTypeSelect.innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
+            roomTypes.forEach(rt => {
+                const option = document.createElement('option');
+                option.value = rt.id;
+                option.textContent = rt.name;
+                roomTypeSelect.appendChild(option);
+            });
+
+            // Auto-select first room type
+            if (roomTypes.length > 0) {
+                roomTypeSelect.value = roomTypes[0].id;
+                await loadRooms();
+            } else {
+                document.getElementById('roomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            }
+        } catch (error) {
+            console.error('Error loading room types:', error);
+            roomTypeSelect.innerHTML = '<option value="">-- Lỗi tải loại phòng --</option>';
+        }
+    }
+
+    // Event listener for PackageId change
+    document.getElementById('PackageId').addEventListener('change', calculateCheckOut);
+
+    // Event listener for CheckIn change
+    document.getElementById('CheckIn').addEventListener('change', calculateCheckOut);
+
+    // Event listeners for Boat and RoomType changes
+    document.getElementById('BoatId').addEventListener('change', async function () {
+        await loadRoomTypes();
+        generateSystemCode();
+    });
+
+    document.getElementById('RoomTypeId').addEventListener('change', async function () {
+        await loadRooms();
+        generateSystemCode();
+    });
+
+    // Event listener for HasTransferService checkbox
+    document.getElementById('HasTransferService').addEventListener('change', function () {
+        const details = document.getElementById('transferServiceDetails');
+        details.style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Event listeners for guest counter buttons
+    document.querySelectorAll('.guest-counter').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const change = parseInt(this.dataset.change);
+            const input = this.parentElement.querySelector('input[type="number"]');
+            let value = parseInt(input.value) || 0;
+            value = Math.max(0, value + change);
+            input.value = value;
+        });
+    });
+
+    // Load rooms based on BoatId and RoomTypeId
+    async function loadRooms() {
+        const boatId = document.getElementById('BoatId').value;
+        const roomTypeId = document.getElementById('RoomTypeId').value;
+        const roomSelect = document.getElementById('roomId');
+
+        if (!boatId || !roomTypeId) {
+            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            return;
+        }
+
+        try {
+            const url = `/api/rooms?boatId=${boatId}&roomTypeId=${roomTypeId}`;
+            const response = await fetch(url);
+            const rooms = await response.json();
+
+            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.id;
+                option.textContent = `${room.roomCode} - ${room.roomName}`;
+                roomSelect.appendChild(option);
+            });
+
+            // Auto-select first room
+            if (rooms.length > 0) {
+                roomSelect.value = rooms[0].id;
+            }
+        } catch (error) {
+            console.error('Error loading rooms:', error);
+            roomSelect.innerHTML = '<option value="">-- Lỗi tải phòng --</option>';
+        }
+    }
+
+    // Auto-calculate CheckOut based on CheckIn + Package.AddedDate + 1
+    async function calculateCheckOut() {
+        const checkInInput = document.getElementById('CheckIn').value;
+        const packageSelect = document.getElementById('PackageId');
+        const checkOutInput = document.getElementById('CheckOut');
+
+        if (!checkInInput || !packageSelect.value) {
+            checkOutInput.value = '';
+            return;
+        }
+
+        const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+        const addedDate = parseInt(selectedOption.dataset.days) || 0;
+        const daysToAdd = addedDate + 1;
+
+        const checkIn = new Date(checkInInput);
+        const checkOut = new Date(checkIn);
+        checkOut.setDate(checkOut.getDate() + daysToAdd);
+
+        const year = checkOut.getFullYear();
+        const month = String(checkOut.getMonth() + 1).padStart(2, '0');
+        const day = String(checkOut.getDate()).padStart(2, '0');
+        checkOutInput.value = `${year}-${month}-${day}`;
+    }
+
+    function saveBooking() {
+        const roomIdValue = document.getElementById('roomId').value;
+        const employeeIdValue = document.getElementById('EmployeeId').value;
+        const enteredByUserIdValue = document.getElementById('EnteredByUserId').value;
+        const isEditMode = !!window.currentEditingBookingId;
+
+        const payload = {
+            ChannelId: parseInt(document.getElementById('ChannelId').value),
+            BoatId: parseInt(document.getElementById('BoatId').value),
+            RoomId: roomIdValue ? parseInt(roomIdValue) : 0,
+            PackageId: parseInt(document.getElementById('PackageId').value),
+            CurrencyId: parseInt(document.getElementById('CurrencyId').value),
+            AgencyBookingCode: document.getElementById('AgencyBookingCode').value || null,
+            CustomerName: document.getElementById('CustomerName').value,
+            AdultCount: parseInt(document.getElementById('AdultCount').value),
+            ChildCount: parseInt(document.getElementById('ChildCount').value),
+            InfantCount: parseInt(document.getElementById('InfantCount').value),
+            CheckIn: document.getElementById('CheckIn').value,
+            TotalPrice: parseFloat(document.getElementById('TotalPrice').value),
+            HasTransferService: document.getElementById('HasTransferService').checked,
+            PickupPoint: document.getElementById('PickupPoint').value || null,
+            DropoffPoint: document.getElementById('DropoffPoint').value || null,
+            Note: document.getElementById('Note').value || null,
+            EmployeeId: employeeIdValue ? parseInt(employeeIdValue) : null,
+            EnteredByUserId: enteredByUserIdValue ? parseInt(enteredByUserIdValue) : null,
+            StatusId: isEditMode ? parseInt(document.getElementById('StatusId').value) : 1
+        };
+
+        if (!payload.ChannelId || !payload.BoatId || !payload.PackageId || !payload.CurrencyId || !payload.CheckIn || !payload.TotalPrice) {
+            alert('Vui lòng điền tất cả các trường bắt buộc');
+            return;
+        }
+
+        const url = isEditMode ? `/lich-phong/api/bookings/${window.currentEditingBookingId}` : '/lich-phong/api/bookings';
+        const method = isEditMode ? 'PUT' : 'POST';
+        const successMessage = isEditMode ? 'Booking cập nhật thành công!' : 'Booking tạo thành công!';
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(r => {
+                if (r.ok) {
+                    alert(successMessage);
+                    bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+                    window.currentEditingBookingId = null;
+                    location.reload();
+                } else {
+                    return r.json().then(data => {
+                        alert('Lỗi: ' + (data.error || 'Unknown error'));
+                    });
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+    }
+</script>
+
+<style>
+    .readonly-field {
+        background-color: #f5f5f5 !important;
+        cursor: default !important;
+        color: #666 !important;
+    }
+
+    .readonly-field:focus {
+        background-color: #f5f5f5 !important;
+        border-color: #ccc !important;
+        box-shadow: none !important;
+    }
+</style>

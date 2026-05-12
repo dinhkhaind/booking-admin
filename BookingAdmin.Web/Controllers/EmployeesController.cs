@@ -67,4 +67,17 @@ public class EmployeesController : Controller
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
+
+    [HttpGet("api/employees")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetEmployees()
+    {
+        var employees = await _db.Employees
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.FullName)
+            .Select(e => new { e.Id, e.FullName })
+            .ToListAsync();
+
+        return Json(employees);
+    }
 }

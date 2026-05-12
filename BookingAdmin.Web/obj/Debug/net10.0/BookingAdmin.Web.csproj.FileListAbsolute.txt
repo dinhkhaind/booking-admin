@@ -7,6 +7,7 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/BookingAdmin.Web.runtimeconfig.json
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/BookingAdmin.Web.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/BookingAdmin.Web.pdb
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/BCrypt.Net-Core.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/ClosedXML.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/ClosedXML.Parser.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/DocumentFormat.OpenXml.dll
@@ -27,6 +28,8 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Microsoft.EntityFrameworkCore.Relational.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Microsoft.Extensions.DependencyModel.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Mono.TextTemplating.dll
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Npgsql.dll
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/RBush.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/SixLabors.Fonts.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/System.CodeDom.dll
@@ -110,12 +113,14 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.MvcApplicationPartsAssemblyInfo.cache
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.RazorAssemblyInfo.cache
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.RazorAssemblyInfo.cs
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.sourcelink.json
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/bundle/BookingAdmin.Web.styles.css
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/projectbundle/BookingAdmin.Web.bundle.scp.css
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/byukq9fobz-{0}-vv610ibh04-vv610ibh04.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/x49fpdtfcp-{0}-b9sayid5wm-b9sayid5wm.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/xx815tpn0o-{0}-61n19gt1b8-61n19gt1b8.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/k9tk35n7hs-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
@@ -191,8 +196,4 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.pdb
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.genruntimeconfig.cache
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/ref/BookingAdmin.Web.dll
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/byukq9fobz-{0}-vv610ibh04-vv610ibh04.gz
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/BCrypt.Net-Core.dll
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Npgsql.dll
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/bin/Debug/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.sourcelink.json
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/0d0idqudv9-{0}-yajn9wdvee-yajn9wdvee.gz

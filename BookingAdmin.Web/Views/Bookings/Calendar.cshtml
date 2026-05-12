@@ -31,11 +31,11 @@
                     <td>@booking.Boat?.Name</td>
                     <td>@booking.CheckIn.ToString("yyyy-MM-dd")</td>
                     <td>@booking.CheckOut.ToString("yyyy-MM-dd")</td>
-                    <td>@booking.BookingCode</td>
+                    <td>@booking.AgencyBookingCode</td>
                     <td>@booking.CustomerName</td>
                     <td>@booking.Channel?.Name</td>
-                    <td><span class="badge bg-info">@booking.Status</span></td>
-                    <td>@booking.Price.ToString("C")</td>
+                    <td><span class="badge" style="background-color:@booking.BookingStatus?.Color">@booking.BookingStatus?.Name</span></td>
+                    <td>@booking.TotalPrice.ToString("C")</td>
                 </tr>
             }
         </tbody>

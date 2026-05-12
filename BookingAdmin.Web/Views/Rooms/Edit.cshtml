@@ -28,17 +28,18 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label asp-for="TotalRooms" class="form-label">Total Rooms</label>
-            <input asp-for="TotalRooms" type="number" class="form-control" required />
-            <span asp-validation-for="TotalRooms" class="text-danger"></span>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label asp-for="Capacity" class="form-label">Capacity (guests)</label>
-            <input asp-for="Capacity" type="number" class="form-control" required />
-            <span asp-validation-for="Capacity" class="text-danger"></span>
-        </div>
+    <div class="mb-3">
+        <label asp-for="RoomTypeId" class="form-label">Room Type</label>
+        <select asp-for="RoomTypeId" asp-items="@(new SelectList((IEnumerable<BookingAdmin.Web.Models.RoomType>)ViewBag.RoomTypes, "Id", "Name"))" class="form-select" required>
+            <option value="">-- Select Room Type --</option>
+        </select>
+        <span asp-validation-for="RoomTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="TotalRooms" class="form-label">Total Rooms</label>
+        <input asp-for="TotalRooms" type="number" class="form-control" />
+        <span asp-validation-for="TotalRooms" class="text-danger"></span>
     </div>
 
     <div class="mb-3">

@@ -9,6 +9,26 @@ public static class DbSeeder
     {
         if (db.Users.Any()) return; // Already seeded
 
+        // Seed BookingStatuses (must be first for FK)
+        if (!db.BookingStatuses.Any())
+        {
+            db.BookingStatuses.AddRange(
+                new BookingStatus { Id = 1, Code = "Pending", Name = "Pending", Color = "#ffc107", SortOrder = 1 },
+                new BookingStatus { Id = 2, Code = "Confirmed", Name = "Confirmed", Color = "#28a745", SortOrder = 2 },
+                new BookingStatus { Id = 3, Code = "Cancelled", Name = "Cancelled", Color = "#dc3545", SortOrder = 3 },
+                new BookingStatus { Id = 4, Code = "Block", Name = "Block", Color = "#6c757d", SortOrder = 4 }
+            );
+        }
+
+        // Seed Packages
+        if (!db.Packages.Any())
+        {
+            db.Packages.AddRange(
+                new Package { Code = "2N1D", Name = "2 Nights 1 Day", Description = "2 nights 1 day package", AddedDate = 1, IsActive = true },
+                new Package { Code = "3N2D", Name = "3 Nights 2 Days", Description = "3 nights 2 days package", AddedDate = 2, IsActive = true }
+            );
+        }
+
         // Seed Boats
         var hermes = new Boat
         {
@@ -19,8 +39,8 @@ public static class DbSeeder
         db.Boats.Add(hermes);
 
         // Seed Currencies
-        var vnd = new Currency { Code = "VND", Name = "Vietnamese Dong" };
-        var usd = new Currency { Code = "USD", Name = "US Dollar" };
+        var vnd = new Currency { Code = "VND", Name = "Vietnamese Dong", IsDefault = true };
+        var usd = new Currency { Code = "USD", Name = "US Dollar", IsDefault = false };
         db.Currencies.AddRange(vnd, usd);
 
         // Seed ChannelType

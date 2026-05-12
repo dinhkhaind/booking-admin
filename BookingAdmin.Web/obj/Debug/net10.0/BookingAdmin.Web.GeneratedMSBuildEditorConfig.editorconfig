@@ -170,12 +170,40 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbXMvSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/RoomSchedule/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbVNjaGVkdWxlL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/RoomTypes/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbVR5cGVzL0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/RoomTypes/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbVR5cGVzL0RlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/RoomTypes/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbVR5cGVzL0VkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/RoomTypes/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvUm9vbVR5cGVzL0luZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/SaleEntries/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2FsZUVudHJpZXMvSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_BookingDetailDrawer.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Cb29raW5nRGV0YWlsRHJhd2VyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_BookingModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Cb29raW5nTW9kYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_ValidationScriptsPartial.cshtml]

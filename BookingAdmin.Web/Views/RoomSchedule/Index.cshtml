@@ -1,0 +1,195 @@
+@model RoomScheduleViewModel
+@using System.Security.Claims;
+@{
+    ViewData["Title"] = "Lịch Phòng";
+    var currentUser = User.FindFirst(ClaimTypes.Name)?.Value ?? "";
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Lịch Phòng T@(Model.SelectedMonth)/@(Model.SelectedYear)</h2>
+    <div class="gap-2 d-flex">
+        <button class="btn btn-primary" onclick="openModal(@Model.SelectedBoatId, null)">
+            <i class="bi bi-plus"></i> Booking Mới
+        </button>
+        <button class="btn btn-secondary" onclick="blockRoom()">
+            <i class="bi bi-lock"></i> Block Phòng
+        </button>
+    </div>
+</div>
+
+<!-- Current User Data (for modal) -->
+<div class="d-none" data-current-user="@currentUser" data-current-user-id="@currentUserId"></div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Tàu</label>
+                <select name="boatId" class="form-select" onchange="this.form.submit()">
+                    @foreach (var boat in Model.Boats)
+                    {
+                        <option value="@boat.Id" selected="@(boat.Id == Model.SelectedBoatId)">@boat.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tháng</label>
+                <select name="month" class="form-select" onchange="this.form.submit()">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m" selected="@(m == Model.SelectedMonth)">Tháng @m</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Năm</label>
+                <select name="year" class="form-select" onchange="this.form.submit()">
+                    @for (int y = DateTime.Now.Year - 1; y <= DateTime.Now.Year + 2; y++)
+                    {
+                        <option value="@y" selected="@(y == Model.SelectedYear)">@y</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Loại Phòng</label>
+                <select name="roomTypeId" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Tất Cả --</option>
+                    @foreach (var rt in Model.RoomTypes)
+                    {
+                        <option value="@rt.Id" selected="@(rt.Id == Model.SelectedRoomTypeId)">@rt.Name</option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Công Suất</h5>
+                <h3 class="text-primary">@Model.OccupancyRate.ToString("F1")%</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Doanh Thu</h5>
+                <h3 class="text-success">@Model.TotalRevenue.ToString("C0")</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Hiệu Lực</h5>
+                <h3 class="text-info">@Model.ActiveBookingCount</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Last-Min</h5>
+                <h3 class="text-warning">@Model.LastMinuteBookingCount</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid -->
+<div class="card">
+    <div class="card-body" style="overflow-x: auto; overflow-y: auto; max-height: 600px;">
+        <table class="table table-bordered mb-0 room-schedule-table">
+            <thead class="sticky-top">
+                <tr>
+                    <th style="position: sticky; left: 0; z-index: 11; background: white; min-width: 150px;">Phòng</th>
+                    @for (int day = 1; day <= Model.DaysInMonth; day++)
+                    {
+                        <th class="text-center" style="min-width: 60px;">@day</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td style="position: sticky; left: 0; background: white; z-index: 10; min-width: 150px;">
+                            <strong>@row.RoomCode</strong><br/>
+                            <small class="text-muted">@row.RoomTypeName</small>
+                        </td>
+                        @foreach (var cell in row.Days)
+                        {
+                            @if (cell.IsEmpty)
+                            {
+                                <td class="sched-empty" data-room-id="@row.RoomId" data-day="@cell.Day"
+                                    style="cursor: pointer; background-color: #f0f0f0;"
+                                    onclick="openBookingModal(@row.RoomId, @cell.Day)"></td>
+                            }
+                            else if (cell.IsStart)
+                            {
+                                <td colspan="@cell.ColSpan" class="sched-booking" data-booking-id="@cell.Booking!.BookingId"
+                                    style="background-color: @cell.Booking.StatusColor; cursor: pointer; color: white; font-size: 0.85rem; padding: 4px;"
+                                    onclick="openDetailModal(@cell.Booking.BookingId)">
+                                    <strong>@cell.Booking.Code</strong><br/>
+                                    <small>@cell.Booking.CustomerName</small><br/>
+                                    <small>@cell.Booking.PackageCode</small>
+                                </td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Booking Modal -->
+@await Html.PartialAsync("_BookingModal", Model)
+
+<!-- Shared Detail Drawer -->
+@await Html.PartialAsync("_BookingDetailDrawer")
+
+<style>
+    .room-schedule-table {
+        border-collapse: collapse;
+    }
+
+    .sched-empty {
+        height: 60px;
+        border: 1px solid #ddd;
+    }
+
+    .sched-booking {
+        border: 1px solid #ddd;
+        text-align: center;
+        min-height: 60px;
+        vertical-align: middle;
+        opacity: 0.9;
+    }
+
+    .sched-booking:hover {
+        opacity: 1;
+    }
+</style>
+
+<script>
+    function openBookingModal(roomId, day) {
+        const checkIn = new Date(@Model.SelectedYear, @Model.SelectedMonth - 1, day);
+        const checkInStr = checkIn.toISOString().split('T')[0];
+        openModal(@Model.SelectedBoatId, checkInStr);
+    }
+
+    function blockRoom() {
+        alert('Block phòng feature coming soon');
+    }
+</script>
+
+@section Scripts {
+    <script src="~/js/booking-shared.js" asp-append-version="true"></script>
+}

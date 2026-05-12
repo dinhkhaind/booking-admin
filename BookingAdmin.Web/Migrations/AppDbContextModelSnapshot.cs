@@ -60,6 +60,10 @@ namespace BookingAdmin.Web.Migrations
                     b.Property<int>("AdultCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AgencyBookingCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("BoatId")
                         .HasColumnType("integer");
 
@@ -96,38 +100,57 @@ namespace BookingAdmin.Web.Migrations
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("integer");
 
-                    b.Property<DateOnly>("EntryDate")
-                        .HasColumnType("date");
+                    b.Property<int?>("EnteredByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EntryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HasTransferService")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("InfantCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int>("PackageId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PickupPoint")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("SystemCode")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<bool>("TransferUsed")
-                        .HasColumnType("boolean");
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookingCode");
+                    b.HasIndex("AgencyBookingCode");
 
                     b.HasIndex("ChannelId");
 
                     b.HasIndex("CurrencyId");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EnteredByUserId");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("SystemCode");
 
                     b.HasIndex("BoatId", "CheckIn");
 
@@ -159,6 +182,40 @@ namespace BookingAdmin.Web.Migrations
                         .IsUnique();
 
                     b.ToTable("BookingRooms");
+                });
+
+            modelBuilder.Entity("BookingAdmin.Web.Models.BookingStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("BookingStatuses");
                 });
 
             modelBuilder.Entity("BookingAdmin.Web.Models.Channel", b =>
@@ -220,6 +277,11 @@ namespace BookingAdmin.Web.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -260,6 +322,42 @@ namespace BookingAdmin.Web.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("BookingAdmin.Web.Models.Package", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AddedDate")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Packages");
+                });
+
             modelBuilder.Entity("BookingAdmin.Web.Models.Room", b =>
                 {
                     b.Property<int>("Id")
@@ -271,12 +369,12 @@ namespace BookingAdmin.Web.Migrations
                     b.Property<int>("BoatId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("integer");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("RoomCode")
                         .IsRequired()
@@ -284,18 +382,54 @@ namespace BookingAdmin.Web.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("RoomName")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("TotalRooms")
+                    b.Property<int>("RoomTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalRooms")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BoatId", "RoomCode");
+                    b.HasIndex("RoomTypeId");
+
+                    b.HasIndex("BoatId", "RoomCode")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("BookingAdmin.Web.Models.RoomType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BaseCapacity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("RoomTypes");
                 });
 
             modelBuilder.Entity("BookingAdmin.Web.Models.SaleEntry", b =>
@@ -441,13 +575,35 @@ namespace BookingAdmin.Web.Migrations
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("BookingAdmin.Web.Models.User", "EnteredByUser")
+                        .WithMany()
+                        .HasForeignKey("EnteredByUserId");
+
+                    b.HasOne("BookingAdmin.Web.Models.Package", "Package")
+                        .WithMany("Bookings")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BookingAdmin.Web.Models.BookingStatus", "BookingStatus")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Boat");
+
+                    b.Navigation("BookingStatus");
 
                     b.Navigation("Channel");
 
                     b.Navigation("Currency");
 
                     b.Navigation("Employee");
+
+                    b.Navigation("EnteredByUser");
+
+                    b.Navigation("Package");
                 });
 
             modelBuilder.Entity("BookingAdmin.Web.Models.BookingRoom", b =>
@@ -488,7 +644,15 @@ namespace BookingAdmin.Web.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BookingAdmin.Web.Models.RoomType", "RoomType")
+                        .WithMany("Rooms")
+                        .HasForeignKey("RoomTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Boat");
+
+                    b.Navigation("RoomType");
                 });
 
             modelBuilder.Entity("BookingAdmin.Web.Models.UserBoat", b =>
@@ -544,9 +708,19 @@ namespace BookingAdmin.Web.Migrations
                     b.Navigation("Bookings");
                 });
 
+            modelBuilder.Entity("BookingAdmin.Web.Models.Package", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
             modelBuilder.Entity("BookingAdmin.Web.Models.Room", b =>
                 {
                     b.Navigation("BookingRooms");
+                });
+
+            modelBuilder.Entity("BookingAdmin.Web.Models.RoomType", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 
             modelBuilder.Entity("BookingAdmin.Web.Models.User", b =>

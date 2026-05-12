@@ -7,6 +7,7 @@ namespace BookingAdmin.Web.Services;
 public class DashboardService
 {
     private readonly AppDbContext _db;
+    private const int CancelledStatusId = 3; // Seeded as "Cancelled"
 
     public DashboardService(AppDbContext db) => _db = db;
 
@@ -63,7 +64,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
-            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.Status != "Cancelled")
+            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
         var employees = await _db.Employees.Where(e => e.IsActive).ToListAsync();
@@ -84,7 +85,7 @@ public class DashboardService
                 {
                     var dayMatch = ExtractDateFromWeekLabel(label, periodStart);
                     var dayMatchDate = new DateOnly(dayMatch.Year, dayMatch.Month, dayMatch.Day);
-                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
                 else if (period == "month")
                 {
@@ -92,12 +93,12 @@ public class DashboardService
                     var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
                     var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
                     var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
-                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
                 else if (period == "year")
                 {
                     var monthNum = int.Parse(label.Replace("T", ""));
-                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
 
                 row.PeriodSales[label] = sales;
@@ -129,7 +130,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
-            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.Status == "Cancelled")
+            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId == CancelledStatusId)
             .ToListAsync();
 
         var employees = await _db.Employees.Where(e => e.IsActive).ToListAsync();
@@ -150,7 +151,7 @@ public class DashboardService
                 {
                     var dayMatch = ExtractDateFromWeekLabel(label, periodStart);
                     var dayMatchDate = new DateOnly(dayMatch.Year, dayMatch.Month, dayMatch.Day);
-                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
                 else if (period == "month")
                 {
@@ -158,12 +159,12 @@ public class DashboardService
                     var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
                     var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
                     var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
-                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
                 else if (period == "year")
                 {
                     var monthNum = int.Parse(label.Replace("T", ""));
-                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
                 }
 
                 row.PeriodSales[label] = sales;
@@ -204,17 +205,17 @@ public class DashboardService
 
         foreach (var channel in channels)
         {
-            var activeBookings = bookings.Where(b => b.ChannelId == channel.Id && b.Status != "Cancelled").ToList();
-            var cancelledBookings = bookings.Where(b => b.ChannelId == channel.Id && b.Status == "Cancelled").ToList();
+            var activeBookings = bookings.Where(b => b.ChannelId == channel.Id && b.StatusId != CancelledStatusId).ToList();
+            var cancelledBookings = bookings.Where(b => b.ChannelId == channel.Id && b.StatusId == CancelledStatusId).ToList();
 
             if (!activeBookings.Any() && !cancelledBookings.Any()) continue;
 
             var row = new ChannelSummaryRow { ChannelName = channel.Name };
             row.TotalRooms = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
-            row.TotalSales = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+            row.TotalSales = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
             row.TotalCustomers = activeBookings.Count;
             row.CancelledRooms = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
-            row.CancelledSales = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)));
+            row.CancelledSales = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
             row.CancelledCustomers = cancelledBookings.Count;
 
             result.Add(row);
@@ -246,7 +247,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
-            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.Status != "Cancelled")
+            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
         var employees = await _db.Employees.Where(e => e.IsActive).ToListAsync();
@@ -256,8 +257,8 @@ public class DashboardService
         {
             var empBookings = bookings.Where(b => b.EmployeeId == emp.Id).ToList();
 
-            var lastmin1Day = empBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.EntryDate.ToDateTime(TimeOnly.MinValue)).TotalDays < 1).ToList();
-            var lastmin3Days = empBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.EntryDate.ToDateTime(TimeOnly.MinValue)).TotalDays < 3).ToList();
+            var lastmin1Day = empBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.CreatedAt).TotalDays < 1).ToList();
+            var lastmin3Days = empBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.CreatedAt).TotalDays < 3).ToList();
 
             if (!lastmin1Day.Any() && !lastmin3Days.Any()) continue;
 
@@ -265,9 +266,9 @@ public class DashboardService
             {
                 EmployeeName = emp.FullName,
                 Rooms1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price))),
+                Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
                 Rooms3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)))
+                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)))
             };
             result.Add(row);
         }
@@ -296,7 +297,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
-            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.Status != "Cancelled")
+            .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
         var channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
@@ -305,8 +306,8 @@ public class DashboardService
         foreach (var channel in channels)
         {
             var channelBookings = bookings.Where(b => b.ChannelId == channel.Id).ToList();
-            var lastmin1Day = channelBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.EntryDate.ToDateTime(TimeOnly.MinValue)).TotalDays < 1).ToList();
-            var lastmin3Days = channelBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.EntryDate.ToDateTime(TimeOnly.MinValue)).TotalDays < 3).ToList();
+            var lastmin1Day = channelBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.CreatedAt).TotalDays < 1).ToList();
+            var lastmin3Days = channelBookings.Where(b => (b.CheckIn.ToDateTime(TimeOnly.MinValue) - b.CreatedAt).TotalDays < 3).ToList();
 
             if (!lastmin1Day.Any() && !lastmin3Days.Any()) continue;
 
@@ -314,9 +315,9 @@ public class DashboardService
             {
                 ChannelName = channel.Name,
                 Rooms1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price))),
+                Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
                 Rooms3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.Price)))
+                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)))
             };
             result.Add(row);
         }

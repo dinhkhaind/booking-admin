@@ -1,0 +1,37 @@
+@model RoomType
+@{ ViewData["Title"] = "Delete Room Type"; }
+
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">⚠️ Delete Room Type</h4>
+    <p>Are you sure you want to delete <strong>@Model.Name</strong>?</p>
+    <hr>
+    <p class="mb-0">This action cannot be undone.</p>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Room Type Details</h5>
+            <p><strong>Name:</strong> @Model.Name</p>
+            <p><strong>Description:</strong> @(Model.Description ?? "N/A")</p>
+            <p><strong>Base Capacity:</strong> @Model.BaseCapacity guests</p>
+            <p><strong>Status:</strong>
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">Inactive</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

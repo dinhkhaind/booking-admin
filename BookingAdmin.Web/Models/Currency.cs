@@ -14,5 +14,7 @@ public class Currency
     [Required]
     public string Name { get; set; } = string.Empty;
 
+    public bool IsDefault { get; set; } = false;
+
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

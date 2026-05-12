@@ -16,14 +16,35 @@ public class RoomsController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
-        var rooms = await _db.Rooms.OrderBy(r => r.RoomCode).ToListAsync();
+        var rooms = await _db.Rooms.Include(r => r.RoomType).OrderBy(r => r.RoomCode).ToListAsync();
         return View(rooms);
+    }
+
+    [HttpGet("api/rooms")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetRoomsByFilter(int? boatId, int? roomTypeId)
+    {
+        var query = _db.Rooms.AsQueryable();
+
+        if (boatId.HasValue && boatId.Value > 0)
+            query = query.Where(r => r.BoatId == boatId.Value);
+
+        if (roomTypeId.HasValue && roomTypeId.Value > 0)
+            query = query.Where(r => r.RoomTypeId == roomTypeId.Value);
+
+        var rooms = await query
+            .OrderBy(r => r.RoomCode)
+            .Select(r => new { r.Id, r.RoomCode, r.RoomName })
+            .ToListAsync();
+
+        return Json(rooms);
     }
 
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create()
     {
         ViewBag.Boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+        ViewBag.RoomTypes = await _db.RoomTypes.Where(rt => rt.IsActive).OrderBy(rt => rt.Name).ToListAsync();
         return View();
     }
 
@@ -32,7 +53,12 @@ public class RoomsController : Controller
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create(Room room)
     {
-        if (!ModelState.IsValid) return View(room);
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+            ViewBag.RoomTypes = await _db.RoomTypes.Where(rt => rt.IsActive).OrderBy(rt => rt.Name).ToListAsync();
+            return View(room);
+        }
         _db.Rooms.Add(room);
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
@@ -44,6 +70,7 @@ public class RoomsController : Controller
         var room = await _db.Rooms.FindAsync(id);
         if (room == null) return NotFound();
         ViewBag.Boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+        ViewBag.RoomTypes = await _db.RoomTypes.Where(rt => rt.IsActive).OrderBy(rt => rt.Name).ToListAsync();
         return View(room);
     }
 
@@ -56,6 +83,7 @@ public class RoomsController : Controller
         if (!ModelState.IsValid)
         {
             ViewBag.Boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+            ViewBag.RoomTypes = await _db.RoomTypes.Where(rt => rt.IsActive).OrderBy(rt => rt.Name).ToListAsync();
             return View(room);
         }
 

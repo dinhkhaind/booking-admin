@@ -10,36 +10,92 @@ namespace BookingAdmin.Web.Controllers;
 [Authorize(Roles = "Admin,Manager,BookingStaff,Viewer")]
 public class BookingsController : BaseController
 {
-    private const int PageSize = 50;
+    private const int PageSize = 20;
 
     public BookingsController(AppDbContext db) : base(db) { }
 
     [AllowAnonymous]
-    public async Task<IActionResult> Index(string? q, int page = 1)
+    public async Task<IActionResult> Index(
+        int? boatId, int? month, int? year,
+        int? roomTypeId, int? statusId, string? q, int page = 1)
     {
-        var query = _db.Bookings.AsNoTracking().Include(b => b.Boat).Include(b => b.Channel).AsQueryable();
+        var query = _db.Bookings.AsNoTracking()
+            .Include(b => b.Boat)
+            .Include(b => b.Channel)
+            .Include(b => b.Package)
+            .Include(b => b.Currency)
+            .Include(b => b.BookingStatus)
+            .Include(b => b.BookingRooms).ThenInclude(br => br.Room)
+            .AsQueryable();
 
+        // Apply filters
+        if (boatId.HasValue)
+            query = query.Where(b => b.BoatId == boatId.Value);
+        if (month.HasValue)
+            query = query.Where(b => b.CheckIn.Month == month.Value);
+        if (year.HasValue)
+            query = query.Where(b => b.CheckIn.Year == year.Value);
+        if (roomTypeId.HasValue)
+            query = query.Where(b => b.BookingRooms.Any(br =>
+                br.Room != null && br.Room.RoomTypeId == roomTypeId.Value));
+        if (statusId.HasValue)
+            query = query.Where(b => b.StatusId == statusId.Value);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var like = $"%{q.Trim()}%";
             query = query.Where(b =>
-                EF.Functions.Like(b.BookingCode ?? string.Empty, like) ||
+                EF.Functions.Like(b.AgencyBookingCode ?? string.Empty, like) ||
                 EF.Functions.Like(b.CustomerName ?? string.Empty, like) ||
                 EF.Functions.Like(b.Note ?? string.Empty, like));
         }
 
+        // Count and paginate
         var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(b => b.CheckIn).ThenBy(b => b.Boat!.Name)
             .Skip((page - 1) * PageSize).Take(PageSize)
             .ToListAsync();
 
-        ViewBag.Total = total;
-        ViewBag.Page = page;
-        ViewBag.PageSize = PageSize;
-        ViewBag.Filter = new { q };
+        // Load dropdown lists
+        var boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+        var roomTypes = await _db.RoomTypes.Where(r => r.IsActive).OrderBy(r => r.Name).ToListAsync();
+        var statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
 
-        return View(items);
+        // Load modal dropdown data
+        var channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
+        var currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+        var packages = await _db.Packages.Where(p => p.IsActive).OrderBy(p => p.Code).ToListAsync();
+
+        // Compose view model
+        var vm = new BookingListViewModel
+        {
+            BoatId = boatId,
+            Month = month,
+            Year = year,
+            RoomTypeId = roomTypeId,
+            StatusId = statusId,
+            Q = q,
+            Page = page,
+            PageSize = PageSize,
+            TotalCount = total,
+            Bookings = items,
+            Boats = boats,
+            RoomTypes = roomTypes,
+            Statuses = statuses,
+            ModalData = new RoomScheduleViewModel
+            {
+                SelectedBoatId = boatId ?? boats.FirstOrDefault()?.Id ?? 0,
+                SelectedMonth = month ?? DateTime.Today.Month,
+                SelectedYear = year ?? DateTime.Today.Year,
+                Boats = boats,
+                Channels = channels,
+                Currencies = currencies,
+                Packages = packages,
+                Statuses = statuses
+            }
+        };
+
+        return View(vm);
     }
 
     [AllowAnonymous]
@@ -52,6 +108,7 @@ public class BookingsController : BaseController
         var bookings = await _db.Bookings.AsNoTracking()
             .Include(b => b.Boat)
             .Include(b => b.Channel)
+            .Include(b => b.BookingStatus)
             .Where(b => b.CheckIn <= monthEnd && b.CheckOut >= monthStart)
             .OrderBy(b => b.Boat!.Name).ThenBy(b => b.CheckIn)
             .ToListAsync();
@@ -75,6 +132,7 @@ public class BookingsController : BaseController
         ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
         ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
         ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+        ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
         return View();
     }
 
@@ -102,9 +160,42 @@ public class BookingsController : BaseController
             ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
             ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
             ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+            ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             TempData["Error"] = string.Join(" | ", errors);
             return View(booking);
+        }
+
+        // Set default status to Pending (Id = 1) if not selected
+        if (booking.StatusId == 0)
+            booking.StatusId = 2;
+
+        // Validate room overlap
+        if (roomQuantities != null && roomQuantities.Any(rq => rq.Quantity > 0))
+        {
+            var roomIds = roomQuantities.Where(rq => rq.Quantity > 0).Select(rq => rq.RoomId).ToList();
+            var overlappingBooking = await _db.BookingRooms
+                .Include(br => br.Booking)
+                .Where(br => roomIds.Contains(br.RoomId)
+                    && br.Booking != null
+                    && br.Booking.CheckIn < booking.CheckOut
+                    && br.Booking.CheckOut > booking.CheckIn
+                    && br.Booking.StatusId != 3) // Exclude cancelled bookings
+                .FirstOrDefaultAsync();
+
+            if (overlappingBooking != null)
+            {
+                TempData["Error"] = "Phòng này đã có booking trùng lặp trong khoảng thời gian này";
+                ViewBag.Boats = await _db.Boats
+                    .Where(b => b.IsActive && allowedBoatIds.Contains(b.Id))
+                    .OrderBy(b => b.Name)
+                    .ToListAsync();
+                ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
+                ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
+                ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+                ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
+                return View(booking);
+            }
         }
 
         _db.Bookings.Add(booking);
@@ -124,7 +215,7 @@ public class BookingsController : BaseController
             await _db.SaveChangesAsync();
         }
 
-        TempData["Success"] = $"Booking '{booking.BookingCode}' created successfully!";
+        TempData["Success"] = $"Booking '{booking.AgencyBookingCode}' created successfully!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -148,6 +239,7 @@ public class BookingsController : BaseController
         ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
         ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
         ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+        ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
         ViewBag.SelectedRoomIds = booking.BookingRooms.Select(br => br.RoomId).ToList();
         return View(booking);
     }
@@ -178,9 +270,39 @@ public class BookingsController : BaseController
             ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
             ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
             ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+            ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             TempData["Error"] = string.Join(" | ", errors);
             return View(booking);
+        }
+
+        // Validate room overlap (excluding current booking)
+        if (roomQuantities != null && roomQuantities.Any(rq => rq.Quantity > 0))
+        {
+            var roomIds = roomQuantities.Where(rq => rq.Quantity > 0).Select(rq => rq.RoomId).ToList();
+            var overlappingBooking = await _db.BookingRooms
+                .Include(br => br.Booking)
+                .Where(br => roomIds.Contains(br.RoomId)
+                    && br.BookingId != id  // Exclude current booking
+                    && br.Booking != null
+                    && br.Booking.CheckIn < booking.CheckOut
+                    && br.Booking.CheckOut > booking.CheckIn
+                    && br.Booking.StatusId != 3) // Exclude cancelled bookings
+                .FirstOrDefaultAsync();
+
+            if (overlappingBooking != null)
+            {
+                TempData["Error"] = "Phòng này đã có booking trùng lặp trong khoảng thời gian này";
+                ViewBag.Boats = await _db.Boats
+                    .Where(b => b.IsActive && allowedBoatIds.Contains(b.Id))
+                    .OrderBy(b => b.Name)
+                    .ToListAsync();
+                ViewBag.Channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
+                ViewBag.Employees = await _db.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
+                ViewBag.Currencies = await _db.Currencies.OrderBy(c => c.Code).ToListAsync();
+                ViewBag.Statuses = await _db.BookingStatuses.OrderBy(s => s.SortOrder).ToListAsync();
+                return View(booking);
+            }
         }
 
         _db.Bookings.Update(booking);
@@ -204,7 +326,7 @@ public class BookingsController : BaseController
         }
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"Booking '{booking.BookingCode}' updated successfully!";
+        TempData["Success"] = $"Booking '{booking.AgencyBookingCode}' updated successfully!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -228,9 +350,10 @@ public class BookingsController : BaseController
             return Json(new List<object>());
 
         var rooms = await _db.Rooms
+            .Include(r => r.RoomType)
             .Where(r => r.BoatId == boatId)
             .OrderBy(r => r.RoomCode)
-            .Select(r => new { r.Id, r.RoomCode, r.RoomName, r.TotalRooms })
+            .Select(r => new { r.Id, r.RoomCode, RoomTypeName = r.RoomType != null ? (string)r.RoomType.Name : "" })
             .ToListAsync();
         return Json(rooms);
     }

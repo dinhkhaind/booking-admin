@@ -7,24 +7,27 @@ public class Room
 {
     public int Id { get; set; }
 
-    public int BoatId { get; set; }
-    [ForeignKey(nameof(BoatId))]
-    public Boat? Boat { get; set; }
-
     [MaxLength(50)]
     [Required]
     public string RoomCode { get; set; } = string.Empty;
 
     [MaxLength(200)]
-    [Required]
-    public string RoomName { get; set; } = string.Empty;
+    public string? RoomName { get; set; }
 
-    [MaxLength(100)]
+    public int RoomTypeId { get; set; }
+    [ForeignKey(nameof(RoomTypeId))]
+    public RoomType? RoomType { get; set; }
+
+    public int? TotalRooms { get; set; }
+
+    [MaxLength(200)]
     public string? Location { get; set; }
 
-    public int TotalRooms { get; set; } = 1;
+    public int BoatId { get; set; }
+    [ForeignKey(nameof(BoatId))]
+    public Boat? Boat { get; set; }
 
-    public int Capacity { get; set; } = 2;
+    public bool IsActive { get; set; } = true;
 
     public ICollection<BookingRoom> BookingRooms { get; set; } = new List<BookingRoom>();
 }

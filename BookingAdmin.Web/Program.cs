@@ -14,10 +14,12 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
+        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<RoomScheduleService>();
 
 builder.Services.AddAuthentication("BookingCookie")
     .AddCookie("BookingCookie", opts =>
