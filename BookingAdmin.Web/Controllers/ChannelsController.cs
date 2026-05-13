@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookingAdmin.Web.Controllers;
 
@@ -80,5 +81,62 @@ public class ChannelsController : Controller
         _db.Channels.Remove(c);
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet("api/channels")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetChannels()
+    {
+        var channels = await _db.Channels
+            .OrderBy(c => c.Name)
+            .Select(c => new { id = c.Id, name = c.Name })
+            .ToListAsync();
+        return Json(channels);
+    }
+
+    [HttpGet("api/channeltypes")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetChannelTypes()
+    {
+        var channelTypes = await _db.ChannelTypes
+            .OrderBy(ct => ct.Name)
+            .Select(ct => new { id = ct.Id, name = ct.Name })
+            .ToListAsync();
+        return Json(channelTypes);
+    }
+
+    [HttpPost("api/channels")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CreateChannelApi([FromBody] CreateChannelRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { error = "Tên đại lý không được trống" });
+
+        if (request.ChannelTypeId <= 0)
+            return BadRequest(new { error = "Loại đại lý không hợp lệ" });
+
+        var channelType = await _db.ChannelTypes.FindAsync(request.ChannelTypeId);
+        if (channelType == null)
+            return BadRequest(new { error = "Loại đại lý không tồn tại" });
+
+        var channel = new Channel
+        {
+            Name = request.Name.Trim(),
+            ChannelTypeId = request.ChannelTypeId
+        };
+
+        _db.Channels.Add(channel);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { id = channel.Id, name = channel.Name });
+    }
+
+    public class CreateChannelRequest
+    {
+        [Required]
+        public string Name { get; set; }
+
+        [Required]
+        public int ChannelTypeId { get; set; }
     }
 }

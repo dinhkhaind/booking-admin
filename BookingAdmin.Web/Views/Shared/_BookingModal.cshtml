@@ -11,17 +11,22 @@
                 <form id="bookingForm">
                     <!-- Row 1: Channel -->
                     <div class="row mb-3">
-                        <div class="col-md-8">
+                        <div class="col-md-7">
                             <label class="form-label">Tên Đại Lý</label>
-                            <select id="ChannelId" name="ChannelId" class="form-select" required>
-                                <option value="">-- Chọn Đại Lý --</option>
-                                @foreach (var channel in Model.Channels)
-                                {
-                                    <option value="@channel.Id">@channel.Name</option>
-                                }
-                            </select>
+                            <div class="input-group">
+                                <select id="ChannelId" name="ChannelId" class="form-select" required>
+                                    <option value="">-- Chọn Đại Lý --</option>
+                                    @foreach (var channel in Model.Channels)
+                                    {
+                                        <option value="@channel.Id">@channel.Name</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="addChannelBtn" onclick="openAddChannelModal()">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label class="form-label">Code Đại Lý</label>
                             <input type="text" id="AgencyBookingCode" name="AgencyBookingCode" class="form-control" />
                         </div>
@@ -191,6 +196,36 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 <button type="button" class="btn btn-primary" onclick="saveBooking()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Channel Modal (nested) -->
+<div class="modal fade" id="addChannelModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm Đại Lý Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addChannelForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên Đại Lý</label>
+                        <input type="text" id="NewChannelName" class="form-control" required placeholder="Nhập tên đại lý" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Loại Đại Lý</label>
+                        <select id="NewChannelTypeId" class="form-select" required>
+                            <option value="">-- Chọn Loại --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="createNewChannel()">Tạo Đại Lý</button>
             </div>
         </div>
     </div>
@@ -568,6 +603,103 @@
                 }
             })
             .catch(err => alert('Error: ' + err));
+    }
+
+    // Open the add channel modal and load channel types
+    async function openAddChannelModal() {
+        try {
+            // Load channel types for the dropdown
+            const response = await fetch('/api/channeltypes');
+            if (!response.ok) throw new Error('Failed to load channel types');
+
+            const channelTypes = await response.json();
+            const selectElement = document.getElementById('NewChannelTypeId');
+            selectElement.innerHTML = '<option value="">-- Chọn Loại --</option>';
+
+            channelTypes.forEach(ct => {
+                const option = document.createElement('option');
+                option.value = ct.id;
+                option.textContent = ct.name;
+                selectElement.appendChild(option);
+            });
+
+            // Clear form and open modal
+            document.getElementById('addChannelForm').reset();
+            const modal = new bootstrap.Modal(document.getElementById('addChannelModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error loading channel types:', error);
+            alert('Lỗi tải loại đại lý');
+        }
+    }
+
+    // Create a new channel
+    async function createNewChannel() {
+        const name = document.getElementById('NewChannelName').value.trim();
+        const channelTypeId = document.getElementById('NewChannelTypeId').value;
+
+        if (!name) {
+            alert('Vui lòng nhập tên đại lý');
+            return;
+        }
+
+        if (!channelTypeId) {
+            alert('Vui lòng chọn loại đại lý');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/channels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    channelTypeId: parseInt(channelTypeId)
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create channel');
+            }
+
+            const newChannel = await response.json();
+
+            // Close the nested modal
+            bootstrap.Modal.getInstance(document.getElementById('addChannelModal')).hide();
+
+            // Reload channels dropdown and select the new one
+            await refreshChannelsDropdown(newChannel.id);
+
+            alert('Đại lý được tạo thành công!');
+        } catch (error) {
+            console.error('Error creating channel:', error);
+            alert('Lỗi: ' + error.message);
+        }
+    }
+
+    // Refresh channels dropdown and select the new channel
+    async function refreshChannelsDropdown(newChannelId) {
+        try {
+            const response = await fetch('/api/channels');
+            if (!response.ok) throw new Error('Failed to load channels');
+
+            const channels = await response.json();
+            const selectElement = document.getElementById('ChannelId');
+            selectElement.innerHTML = '<option value="">-- Chọn Đại Lý --</option>';
+
+            channels.forEach(ch => {
+                const option = document.createElement('option');
+                option.value = ch.id;
+                option.textContent = ch.name;
+                selectElement.appendChild(option);
+            });
+
+            // Auto-select the newly created channel
+            selectElement.value = newChannelId;
+        } catch (error) {
+            console.error('Error refreshing channels:', error);
+        }
     }
 </script>
 

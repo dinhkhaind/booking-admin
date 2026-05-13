@@ -120,9 +120,10 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/bundle/BookingAdmin.Web.styles.css
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/scopedcss/projectbundle/BookingAdmin.Web.bundle.scp.css
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/byukq9fobz-{0}-vv610ibh04-vv610ibh04.gz
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/byukq9fobz-{0}-hm6nr32y6r-hm6nr32y6r.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/x49fpdtfcp-{0}-b9sayid5wm-b9sayid5wm.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/xx815tpn0o-{0}-61n19gt1b8-61n19gt1b8.gz
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/0d0idqudv9-{0}-yajn9wdvee-yajn9wdvee.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/k9tk35n7hs-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/j1zvtrvrme-{0}-bqjiyaj88i-bqjiyaj88i.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/qhc6kpi9m4-{0}-c2jlpeoesf-c2jlpeoesf.gz
@@ -196,4 +197,3 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.pdb
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/BookingAdmin.Web.genruntimeconfig.cache
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/ref/BookingAdmin.Web.dll
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/0d0idqudv9-{0}-yajn9wdvee-yajn9wdvee.gz
