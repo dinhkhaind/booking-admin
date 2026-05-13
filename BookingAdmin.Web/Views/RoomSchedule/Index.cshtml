@@ -67,20 +67,20 @@
 </div>
 
 <!-- Metrics -->
-<div class="row mb-4">
+<div class="row mb-3 g-2">
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card metric-card">
             <div class="card-body">
-                <h5 class="text-muted">Công Suất</h5>
-                <h3 class="text-primary">@Model.OccupancyRate.ToString("F1")%</h3>
+                <div class="metric-label">Công Suất</div>
+                <div class="metric-value text-primary">@Model.OccupancyRate.ToString("F1")%</div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card metric-card">
             <div class="card-body">
-                <h5 class="text-muted">Doanh Thu</h5>
-                <p class="text-success" style="font-size: 0.95rem; line-height: 1.4; margin: 0;">
+                <div class="metric-label">Doanh Thu</div>
+                <div class="metric-value text-success">
                     @if (!string.IsNullOrEmpty(Model.RevenueByCurrency))
                     {
                         @Html.Raw(Model.RevenueByCurrency)
@@ -89,23 +89,23 @@
                     {
                         <span>0</span>
                     }
-                </p>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card metric-card">
             <div class="card-body">
-                <h5 class="text-muted">Hiệu Lực</h5>
-                <h3 class="text-info">@Model.ActiveBookingCount</h3>
+                <div class="metric-label">Hiệu Lực</div>
+                <div class="metric-value text-info">@Model.ActiveBookingCount</div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card text-center">
+        <div class="card metric-card">
             <div class="card-body">
-                <h5 class="text-muted">Last-Min</h5>
-                <h3 class="text-warning">@Model.LastMinuteBookingCount</h3>
+                <div class="metric-label">Last-Min</div>
+                <div class="metric-value text-warning">@Model.LastMinuteBookingCount</div>
             </div>
         </div>
     </div>
@@ -122,8 +122,17 @@
             @foreach (var row in Model.Rows)
             {
                 <div class="schedule-room-cell">
-                    <strong>@row.RoomCode</strong><br/>
-                    <small class="text-muted">@row.RoomTypeName</small>
+                    <!-- Line 1: RoomCode - Location -->
+                    <div class="room-cell-line1">
+                        <span class="room-cell-code">@row.RoomCode</span>
+                        @if (!string.IsNullOrEmpty(row.Location))
+                        {
+                            <span> – </span>
+                            <span class="room-cell-location">@row.Location</span>
+                        }
+                    </div>
+                    <!-- Line 2: RoomName -->
+                    <div class="room-cell-name">@row.RoomName</div>
                 </div>
             }
         </div>
@@ -183,8 +192,8 @@
                                 <div class="schedule-cell sched-booking" data-booking-id="@cell.Booking.BookingId"
                                     style="background-color: @chipColor; grid-column: span @cell.ColSpan;"
                                     onclick="openDetailModal(@cell.Booking.BookingId)">
-                                    <strong>@cell.Booking.ChannelName</strong><br/>
-                                    <small>@cell.Booking.PackageCode</small>
+                                    <div class="booking-chip-line1">@cell.Booking.ChannelName</div>
+                                    <div class="booking-chip-line2">@cell.Booking.PackageCode</div>
                                 </div>
                             }
                         }
@@ -205,6 +214,26 @@
 @await Html.PartialAsync("_BookingDetailDrawer")
 
 <style>
+    /* Metric Cards */
+    .metric-card .card-body {
+        padding: 0.5rem 0.75rem !important;
+        text-align: center;
+    }
+
+    .metric-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
     .schedule-container {
         display: flex;
         max-height: 600px;
@@ -228,6 +257,7 @@
         justify-content: center;
         height: 60px;
         font-weight: bold;
+        font-size: 0.9rem;
         border-bottom: 1px solid #dee2e6;
         background: white;
         position: sticky;
@@ -236,13 +266,39 @@
     }
 
     .schedule-room-cell {
-        padding: 8px;
+        padding: 6px 8px;
         border-bottom: 1px solid #ddd;
-        min-height: 60px;
+        min-height: 70px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        gap: 3px;
         background: white;
+    }
+
+    .room-cell-line1 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .room-cell-code {
+        font-weight: 700;
+    }
+
+    .room-cell-location {
+        font-size: 0.6rem;
+        color: #6c757d;
+        font-weight: normal;
+    }
+
+    .room-cell-name {
+        font-size: 0.6rem;
+        color: #6c757d;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* Scrollable Area */
@@ -307,12 +363,30 @@
 
     .sched-booking {
         border: 1px solid #ddd;
-        text-align: center;
         color: white;
-        font-size: 0.70rem;
-        padding: 4px;
+        padding: 3px 4px;
         cursor: pointer;
         opacity: 0.9;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .booking-chip-line1 {
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .booking-chip-line2 {
+        font-size: 0.7rem;
+        opacity: 0.85;
     }
 
     .sched-booking:hover {
