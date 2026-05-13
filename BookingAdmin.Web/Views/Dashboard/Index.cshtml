@@ -124,23 +124,50 @@
     .export-btn:hover {
         background: #005a9e;
     }
+
+    .report-table td.number-format {
+        line-height: 1.0;
+        padding: 2px;
+    }
+
+    .report-table td.number-format div {
+        margin: 2px 0;
+    }
 </style>
 
 <div class="dashboard-header">
     <div>
         <h2>Báo cáo Doanh số - @Model.BoatName</h2>
         <p class="text-muted" style="margin-top: 0.5rem;">Từ @Model.PeriodStart.ToString("dd/MM/yyyy") đến @Model.PeriodEnd.ToString("dd/MM/yyyy")</p>
+        @if (!string.IsNullOrEmpty(Model.RevenueByCurrency))
+        {
+            <div style="margin-top: 0.75rem; font-size: 0.95rem;">
+                <strong>Doanh Thu:</strong>
+                <div style="margin-top: 0.25rem; color: #666;">
+                    @Html.Raw(Model.RevenueByCurrency)
+                </div>
+            </div>
+        }
     </div>
     <form method="get" style="display: flex; gap: 0.5rem; align-items: center;">
-        <a href="@Url.Action("ExportExcel", new { period = Model.Period })" class="export-btn">
-            <i class="bi bi-download"></i> Export Excel
-        </a>
+        @if (Model.Period == "custom")
+        {
+            <a href="@Url.Action("ExportExcel", new { fromDate = Model.PeriodStart.ToString("yyyy-MM-dd"), toDate = Model.PeriodEnd.ToString("yyyy-MM-dd") })" class="export-btn">
+                <i class="bi bi-download"></i> Export Excel
+            </a>
+        }
+        else
+        {
+            <a href="@Url.Action("ExportExcel", new { period = Model.Period })" class="export-btn">
+                <i class="bi bi-download"></i> Export Excel
+            </a>
+        }
     </form>
 </div>
 
 <div style="margin-bottom: 2rem;">
     <strong>Chọn kỳ báo cáo:</strong>
-    <div style="margin-top: 0.5rem;">
+    <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
         <a href="@Url.Action("Index", new { period = "week" })" class="period-button @(Model.Period == "week" ? "active" : "")">
             Tuần này
         </a>
@@ -150,8 +177,56 @@
         <a href="@Url.Action("Index", new { period = "year" })" class="period-button @(Model.Period == "year" ? "active" : "")">
             Năm này
         </a>
+        <button type="button" class="period-button @(Model.Period == "custom" ? "active" : "")" onclick="toggleCustomDate()" id="customBtn">
+            Tùy chỉnh
+        </button>
+
+        <!-- Custom Date Inputs -->
+        <div id="customDateInputs" style="display: @(Model.Period == "custom" ? "flex" : "none"); gap: 0.5rem; align-items: center;">
+            <input type="date" id="fromDate" class="form-control" style="width: 150px; padding: 0.5rem; font-size: 0.9rem;" />
+            <span>–</span>
+            <input type="date" id="toDate" class="form-control" style="width: 150px; padding: 0.5rem; font-size: 0.9rem;" />
+            <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomDate()" style="padding: 0.5rem 1rem;">
+                Áp dụng
+            </button>
+        </div>
     </div>
 </div>
+
+<script>
+    function toggleCustomDate() {
+        const customInputs = document.getElementById('customDateInputs');
+        const isHidden = customInputs.style.display === 'none' || customInputs.style.display === '';
+
+        if (isHidden) {
+            customInputs.style.display = 'flex';
+            // Set default values to current period
+            const fromDateStr = '@Model.PeriodStart.ToString("yyyy-MM-dd")';
+            const toDateStr = '@Model.PeriodEnd.ToString("yyyy-MM-dd")';
+            document.getElementById('fromDate').value = fromDateStr;
+            document.getElementById('toDate').value = toDateStr;
+        } else {
+            customInputs.style.display = 'none';
+        }
+    }
+
+    function applyCustomDate() {
+        const fromDate = document.getElementById('fromDate').value;
+        const toDate = document.getElementById('toDate').value;
+
+        if (!fromDate || !toDate) {
+            alert('Vui lòng chọn cả từ ngày và đến ngày');
+            return;
+        }
+
+        if (new Date(fromDate) > new Date(toDate)) {
+            alert('Từ ngày phải nhỏ hơn đến ngày');
+            return;
+        }
+
+        window.location.href = `@Url.Action("Index")?fromDate=${fromDate}&toDate=${toDate}`;
+    }
+</script>
 
 @if (Model.EmployeeSalesData.Any())
 {
@@ -175,10 +250,38 @@
                         <td>@row.EmployeeName</td>
                         @foreach (var label in Model.PeriodLabels)
                         {
-                            var sales = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
-                            <td class="number-format">@sales.ToString("#,##0")</td>
+                            var currencyBreakdown = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : new Dictionary<string, decimal>();
+                            <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                                @if (currencyBreakdown.Any())
+                                {
+                                    @foreach (var kvp in currencyBreakdown.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                    {
+                                        <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                    }
+                                    @if (!currencyBreakdown.Any(x => x.Value > 0))
+                                    {
+                                        <div>-</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div>-</div>
+                                }
+                            </td>
                         }
-                        <td class="number-format" style="font-weight: bold;">@row.Total.ToString("#,##0")</td>
+                        <td class="number-format" style="font-weight: bold;">
+                            @if (row.TotalByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.TotalByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>@row.Total.ToString("#,##0")</div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -208,10 +311,38 @@
                         <td>@row.EmployeeName</td>
                         @foreach (var label in Model.PeriodLabels)
                         {
-                            var sales = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
-                            <td class="number-format">@sales.ToString("#,##0")</td>
+                            var currencyBreakdown = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : new Dictionary<string, decimal>();
+                            <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                                @if (currencyBreakdown.Any())
+                                {
+                                    @foreach (var kvp in currencyBreakdown.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                    {
+                                        <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                    }
+                                    @if (!currencyBreakdown.Any(x => x.Value > 0))
+                                    {
+                                        <div>-</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div>-</div>
+                                }
+                            </td>
                         }
-                        <td class="number-format" style="font-weight: bold;">@row.Total.ToString("#,##0")</td>
+                        <td class="number-format" style="font-weight: bold;">
+                            @if (row.TotalByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.TotalByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>@row.Total.ToString("#,##0")</div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -241,10 +372,42 @@
                     <tr @(row.ChannelName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
                         <td>@row.ChannelName</td>
                         <td class="number-format">@row.TotalRooms</td>
-                        <td class="number-format">@row.TotalSales.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.TotalSalesByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.TotalSalesByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.TotalSalesByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                         <td class="number-format">@row.TotalCustomers</td>
                         <td class="number-format">@row.CancelledRooms</td>
-                        <td class="number-format">@row.CancelledSales.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.CancelledSalesByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.CancelledSalesByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.CancelledSalesByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                         <td class="number-format">@row.CancelledCustomers</td>
                     </tr>
                 }
@@ -273,9 +436,41 @@
                     <tr @(row.EmployeeName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
                         <td>@row.EmployeeName</td>
                         <td class="number-format">@row.Rooms1Day</td>
-                        <td class="number-format">@row.Sales1Day.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.Sales1DayByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.Sales1DayByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.Sales1DayByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                         <td class="number-format">@row.Rooms3Days</td>
-                        <td class="number-format">@row.Sales3Days.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.Sales3DaysByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.Sales3DaysByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.Sales3DaysByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -303,9 +498,41 @@
                     <tr @(row.ChannelName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
                         <td>@row.ChannelName</td>
                         <td class="number-format">@row.Rooms1Day</td>
-                        <td class="number-format">@row.Sales1Day.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.Sales1DayByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.Sales1DayByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.Sales1DayByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                         <td class="number-format">@row.Rooms3Days</td>
-                        <td class="number-format">@row.Sales3Days.ToString("#,##0")</td>
+                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
+                            @if (row.Sales3DaysByCurrency.Any())
+                            {
+                                @foreach (var kvp in row.Sales3DaysByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
+                                {
+                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
+                                }
+                                @if (!row.Sales3DaysByCurrency.Any(x => x.Value > 0))
+                                {
+                                    <div>-</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>-</div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>

@@ -44,6 +44,20 @@ public class DashboardService
                 labels.Add($"T{i}");
             }
         }
+        else if (period == "custom")
+        {
+            // For custom date range, show 7-day periods
+            var current = periodStart;
+            int weekNum = 1;
+            while (current <= periodEnd)
+            {
+                var weekEnd = current.AddDays(6);
+                if (weekEnd > periodEnd) weekEnd = periodEnd;
+                labels.Add($"{current:dd/M} - {weekEnd:dd/M}");
+                current = weekEnd.AddDays(1);
+                weekNum++;
+            }
+        }
 
         return labels;
     }
@@ -64,6 +78,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
+            .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
@@ -79,30 +94,23 @@ public class DashboardService
 
             foreach (var label in periodLabels)
             {
-                decimal sales = 0;
+                var periodBookings = GetPeriodBookings(empBookings, period, label, periodStart);
 
-                if (period == "week")
-                {
-                    var dayMatch = ExtractDateFromWeekLabel(label, periodStart);
-                    var dayMatchDate = new DateOnly(dayMatch.Year, dayMatch.Month, dayMatch.Day);
-                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
-                else if (period == "month")
-                {
-                    var weekNum = int.Parse(label.Replace("Tuần ", ""));
-                    var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
-                    var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
-                    var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
-                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
-                else if (period == "year")
-                {
-                    var monthNum = int.Parse(label.Replace("T", ""));
-                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
+                // Group by currency
+                var currencyBreakdown = periodBookings
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
 
-                row.PeriodSales[label] = sales;
-                row.Total += sales;
+                row.PeriodSales[label] = currencyBreakdown;
+
+                // Calculate total and accumulate to TotalByCurrency
+                foreach (var kvp in currencyBreakdown)
+                {
+                    row.Total += kvp.Value;
+                    if (!row.TotalByCurrency.ContainsKey(kvp.Key))
+                        row.TotalByCurrency[kvp.Key] = 0;
+                    row.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
             }
 
             result.Add(row);
@@ -114,13 +122,67 @@ public class DashboardService
             var totalRow = new EmployeeSalesRow { EmployeeName = "TỔNG CỘNG" };
             foreach (var label in periodLabels)
             {
-                totalRow.PeriodSales[label] = result.Sum(r => r.PeriodSales[label]);
-                totalRow.Total += totalRow.PeriodSales[label];
+                var combined = new Dictionary<string, decimal>();
+                foreach (var row in result)
+                {
+                    if (row.PeriodSales.ContainsKey(label))
+                    {
+                        foreach (var kvp in row.PeriodSales[label])
+                        {
+                            if (!combined.ContainsKey(kvp.Key))
+                                combined[kvp.Key] = 0;
+                            combined[kvp.Key] += kvp.Value;
+                        }
+                    }
+                }
+                totalRow.PeriodSales[label] = combined;
+
+                foreach (var kvp in combined)
+                {
+                    totalRow.Total += kvp.Value;
+                    if (!totalRow.TotalByCurrency.ContainsKey(kvp.Key))
+                        totalRow.TotalByCurrency[kvp.Key] = 0;
+                    totalRow.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
             }
             result.Add(totalRow);
         }
 
         return result;
+    }
+
+    private List<Booking> GetPeriodBookings(List<Booking> bookings, string period, string label, DateTime periodStart)
+    {
+        if (period == "week")
+        {
+            var dayMatch = ExtractDateFromWeekLabel(label, periodStart);
+            var dayMatchDate = new DateOnly(dayMatch.Year, dayMatch.Month, dayMatch.Day);
+            return bookings.Where(b => b.CheckIn == dayMatchDate).ToList();
+        }
+        else if (period == "month")
+        {
+            var weekNum = int.Parse(label.Replace("Tuần ", ""));
+            var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
+            var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
+            var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
+            return bookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).ToList();
+        }
+        else if (period == "year")
+        {
+            var monthNum = int.Parse(label.Replace("T", ""));
+            return bookings.Where(b => b.CheckIn.Month == monthNum).ToList();
+        }
+        else if (period == "custom")
+        {
+            // For custom period, split label to get date range
+            var parts = label.Split(" - ");
+            if (parts.Length == 2 && DateOnly.TryParse(parts[0], out var start) && DateOnly.TryParse(parts[1], out var end))
+            {
+                return bookings.Where(b => b.CheckIn >= start && b.CheckIn <= end).ToList();
+            }
+        }
+
+        return new List<Booking>();
     }
 
     public async Task<List<EmployeeSalesRow>> GetEmployeeCancellationDataAsync(int boatId, string period, DateTime periodStart, DateTime periodEnd, List<string> periodLabels)
@@ -130,6 +192,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
+            .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId == CancelledStatusId)
             .ToListAsync();
 
@@ -145,30 +208,23 @@ public class DashboardService
 
             foreach (var label in periodLabels)
             {
-                decimal sales = 0;
+                var periodBookings = GetPeriodBookings(empBookings, period, label, periodStart);
 
-                if (period == "week")
-                {
-                    var dayMatch = ExtractDateFromWeekLabel(label, periodStart);
-                    var dayMatchDate = new DateOnly(dayMatch.Year, dayMatch.Month, dayMatch.Day);
-                    sales = empBookings.Where(b => b.CheckIn == dayMatchDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
-                else if (period == "month")
-                {
-                    var weekNum = int.Parse(label.Replace("Tuần ", ""));
-                    var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
-                    var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
-                    var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
-                    sales = empBookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
-                else if (period == "year")
-                {
-                    var monthNum = int.Parse(label.Replace("T", ""));
-                    sales = empBookings.Where(b => b.CheckIn.Month == monthNum).Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
-                }
+                // Group by currency
+                var currencyBreakdown = periodBookings
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
 
-                row.PeriodSales[label] = sales;
-                row.Total += sales;
+                row.PeriodSales[label] = currencyBreakdown;
+
+                // Calculate total and accumulate to TotalByCurrency
+                foreach (var kvp in currencyBreakdown)
+                {
+                    row.Total += kvp.Value;
+                    if (!row.TotalByCurrency.ContainsKey(kvp.Key))
+                        row.TotalByCurrency[kvp.Key] = 0;
+                    row.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
             }
 
             result.Add(row);
@@ -180,8 +236,28 @@ public class DashboardService
             var totalRow = new EmployeeSalesRow { EmployeeName = "TỔNG CỘNG" };
             foreach (var label in periodLabels)
             {
-                totalRow.PeriodSales[label] = result.Sum(r => r.PeriodSales[label]);
-                totalRow.Total += totalRow.PeriodSales[label];
+                var combined = new Dictionary<string, decimal>();
+                foreach (var row in result)
+                {
+                    if (row.PeriodSales.ContainsKey(label))
+                    {
+                        foreach (var kvp in row.PeriodSales[label])
+                        {
+                            if (!combined.ContainsKey(kvp.Key))
+                                combined[kvp.Key] = 0;
+                            combined[kvp.Key] += kvp.Value;
+                        }
+                    }
+                }
+                totalRow.PeriodSales[label] = combined;
+
+                foreach (var kvp in combined)
+                {
+                    totalRow.Total += kvp.Value;
+                    if (!totalRow.TotalByCurrency.ContainsKey(kvp.Key))
+                        totalRow.TotalByCurrency[kvp.Key] = 0;
+                    totalRow.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
             }
             result.Add(totalRow);
         }
@@ -197,6 +273,7 @@ public class DashboardService
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
             .Include(b => b.Channel)
+            .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate)
             .ToListAsync();
 
@@ -213,9 +290,15 @@ public class DashboardService
             var row = new ChannelSummaryRow { ChannelName = channel.Name };
             row.TotalRooms = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
             row.TotalSales = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
+            row.TotalSalesByCurrency = activeBookings
+                .GroupBy(b => b.Currency!.Code)
+                .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
             row.TotalCustomers = activeBookings.Count;
             row.CancelledRooms = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
             row.CancelledSales = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
+            row.CancelledSalesByCurrency = cancelledBookings
+                .GroupBy(b => b.Currency!.Code)
+                .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
             row.CancelledCustomers = cancelledBookings.Count;
 
             result.Add(row);
@@ -229,9 +312,17 @@ public class DashboardService
                 ChannelName = "TỔNG CỘNG",
                 TotalRooms = result.Sum(r => r.TotalRooms),
                 TotalSales = result.Sum(r => r.TotalSales),
+                TotalSalesByCurrency = result
+                    .SelectMany(r => r.TotalSalesByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)),
                 TotalCustomers = result.Sum(r => r.TotalCustomers),
                 CancelledRooms = result.Sum(r => r.CancelledRooms),
                 CancelledSales = result.Sum(r => r.CancelledSales),
+                CancelledSalesByCurrency = result
+                    .SelectMany(r => r.CancelledSalesByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)),
                 CancelledCustomers = result.Sum(r => r.CancelledCustomers)
             };
             result.Add(totalRow);
@@ -247,6 +338,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
+            .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
@@ -267,8 +359,14 @@ public class DashboardService
                 EmployeeName = emp.FullName,
                 Rooms1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
                 Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
+                Sales1DayByCurrency = lastmin1Day
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice))),
                 Rooms3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)))
+                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
+                Sales3DaysByCurrency = lastmin3Days
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)))
             };
             result.Add(row);
         }
@@ -281,8 +379,16 @@ public class DashboardService
                 EmployeeName = "TỔNG CỘNG",
                 Rooms1Day = result.Sum(r => r.Rooms1Day),
                 Sales1Day = result.Sum(r => r.Sales1Day),
+                Sales1DayByCurrency = result
+                    .SelectMany(r => r.Sales1DayByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)),
                 Rooms3Days = result.Sum(r => r.Rooms3Days),
-                Sales3Days = result.Sum(r => r.Sales3Days)
+                Sales3Days = result.Sum(r => r.Sales3Days),
+                Sales3DaysByCurrency = result
+                    .SelectMany(r => r.Sales3DaysByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value))
             };
             result.Add(totalRow);
         }
@@ -297,6 +403,7 @@ public class DashboardService
 
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
+            .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate && b.StatusId != CancelledStatusId)
             .ToListAsync();
 
@@ -316,8 +423,14 @@ public class DashboardService
                 ChannelName = channel.Name,
                 Rooms1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
                 Sales1Day = lastmin1Day.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
+                Sales1DayByCurrency = lastmin1Day
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice))),
                 Rooms3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity)),
-                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)))
+                Sales3Days = lastmin3Days.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice))),
+                Sales3DaysByCurrency = lastmin3Days
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)))
             };
             result.Add(row);
         }
@@ -330,8 +443,16 @@ public class DashboardService
                 ChannelName = "TỔNG CỘNG",
                 Rooms1Day = result.Sum(r => r.Rooms1Day),
                 Sales1Day = result.Sum(r => r.Sales1Day),
+                Sales1DayByCurrency = result
+                    .SelectMany(r => r.Sales1DayByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value)),
                 Rooms3Days = result.Sum(r => r.Rooms3Days),
-                Sales3Days = result.Sum(r => r.Sales3Days)
+                Sales3Days = result.Sum(r => r.Sales3Days),
+                Sales3DaysByCurrency = result
+                    .SelectMany(r => r.Sales3DaysByCurrency)
+                    .GroupBy(kvp => kvp.Key)
+                    .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value))
             };
             result.Add(totalRow);
         }

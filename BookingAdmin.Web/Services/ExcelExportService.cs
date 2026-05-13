@@ -76,7 +76,12 @@ public class ExcelExportService
             ws.Cell(rowNum, 1).Value = row.EmployeeName;
             foreach (var (label, idx) in periodLabels.Select((l, i) => (l, i)))
             {
-                var value = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
+                decimal value = 0;
+                if (row.PeriodSales.ContainsKey(label))
+                {
+                    var currencyBreakdown = row.PeriodSales[label];
+                    value = currencyBreakdown.Values.Sum();
+                }
                 ws.Cell(rowNum, 2 + idx).Value = value;
                 ws.Cell(rowNum, 2 + idx).Style.NumberFormat.Format = "#,##0";
             }
@@ -134,7 +139,12 @@ public class ExcelExportService
             ws.Cell(rowNum, 1).Value = row.EmployeeName;
             foreach (var (label, idx) in periodLabels.Select((l, i) => (l, i)))
             {
-                var value = row.PeriodSales.ContainsKey(label) ? row.PeriodSales[label] : 0;
+                decimal value = 0;
+                if (row.PeriodSales.ContainsKey(label))
+                {
+                    var currencyBreakdown = row.PeriodSales[label];
+                    value = currencyBreakdown.Values.Sum();
+                }
                 ws.Cell(rowNum, 2 + idx).Value = value;
                 ws.Cell(rowNum, 2 + idx).Style.NumberFormat.Format = "#,##0";
             }

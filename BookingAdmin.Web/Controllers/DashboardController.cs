@@ -18,7 +18,7 @@ public class DashboardController : BaseController
         _dashboardService = dashboardService;
     }
 
-    public async Task<IActionResult> Index(string period = "week")
+    public async Task<IActionResult> Index(string? period = null, string? fromDate = null, string? toDate = null)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         int.TryParse(userIdString, out int userId);
@@ -37,19 +37,38 @@ public class DashboardController : BaseController
         if (boat == null)
             return View(new DashboardViewModel());
 
-        (var periodStart, var periodEnd) = GetPeriodDates(period);
-        var periodLabels = _dashboardService.GetPeriodLabels(period, periodStart, periodEnd);
+        // Determine period or use custom dates
+        DateTime periodStart, periodEnd;
+        string displayPeriod = "week";
+
+        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate) &&
+            DateTime.TryParse(fromDate, out var start) && DateTime.TryParse(toDate, out var end))
+        {
+            periodStart = start;
+            periodEnd = end;
+            displayPeriod = "custom";
+        }
+        else
+        {
+            period ??= "week";
+            displayPeriod = period;
+            (periodStart, periodEnd) = GetPeriodDates(period);
+        }
+
+        var periodLabels = _dashboardService.GetPeriodLabels(displayPeriod, periodStart, periodEnd);
+        var revenueByCurrency = await GetRevenueByCurrencyAsync(selectedBoatId.Value, periodStart, periodEnd);
 
         var model = new DashboardViewModel
         {
             BoatId = selectedBoatId.Value,
             BoatName = boat.Name,
-            Period = period,
+            Period = displayPeriod,
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
             PeriodLabels = periodLabels,
-            EmployeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId.Value, period, periodStart, periodEnd, periodLabels),
-            EmployeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId.Value, period, periodStart, periodEnd, periodLabels),
+            RevenueByCurrency = revenueByCurrency,
+            EmployeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels),
+            EmployeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels),
             ChannelSummaryData = await _dashboardService.GetChannelSummaryDataAsync(selectedBoatId.Value, periodStart, periodEnd),
             EmployeeLastminData = await _dashboardService.GetEmployeeLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd),
             ChannelLastminData = await _dashboardService.GetChannelLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd)
@@ -58,7 +77,7 @@ public class DashboardController : BaseController
         return View(model);
     }
 
-    public async Task<IActionResult> ExportExcel(string period = "week")
+    public async Task<IActionResult> ExportExcel(string? period = null, string? fromDate = null, string? toDate = null)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         int.TryParse(userIdString, out int userId);
@@ -71,11 +90,28 @@ public class DashboardController : BaseController
         if (boat == null)
             return NotFound();
 
-        (var periodStart, var periodEnd) = GetPeriodDates(period);
-        var periodLabels = _dashboardService.GetPeriodLabels(period, periodStart, periodEnd);
+        // Determine period or use custom dates
+        DateTime periodStart, periodEnd;
+        string displayPeriod = "week";
 
-        var employeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId.Value, period, periodStart, periodEnd, periodLabels);
-        var employeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId.Value, period, periodStart, periodEnd, periodLabels);
+        if (!string.IsNullOrEmpty(fromDate) && !string.IsNullOrEmpty(toDate) &&
+            DateTime.TryParse(fromDate, out var start) && DateTime.TryParse(toDate, out var end))
+        {
+            periodStart = start;
+            periodEnd = end;
+            displayPeriod = "custom";
+        }
+        else
+        {
+            period ??= "week";
+            displayPeriod = period;
+            (periodStart, periodEnd) = GetPeriodDates(period);
+        }
+
+        var periodLabels = _dashboardService.GetPeriodLabels(displayPeriod, periodStart, periodEnd);
+
+        var employeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels);
+        var employeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels);
         var channelSummaryData = await _dashboardService.GetChannelSummaryDataAsync(selectedBoatId.Value, periodStart, periodEnd);
         var employeeLastminData = await _dashboardService.GetEmployeeLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd);
         var channelLastminData = await _dashboardService.GetChannelLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd);
@@ -83,7 +119,7 @@ public class DashboardController : BaseController
         var excelService = new ExcelExportService();
         var fileBytes = excelService.GenerateDashboardExcel(
             boat.Name,
-            period,
+            displayPeriod,
             periodLabels,
             employeeSalesData,
             employeeCancellationData,
@@ -94,6 +130,34 @@ public class DashboardController : BaseController
 
         var fileName = $"Dashboard_{boat.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    private async Task<string> GetRevenueByCurrencyAsync(int boatId, DateTime periodStart, DateTime periodEnd)
+    {
+        var startDateOnly = DateOnly.FromDateTime(periodStart);
+        var endDateOnly = DateOnly.FromDateTime(periodEnd);
+
+        var revenueByCurrency = await _db.Bookings
+            .Where(b => b.BoatId == boatId &&
+                        b.CheckIn >= startDateOnly &&
+                        b.CheckOut <= endDateOnly &&
+                        b.BookingStatus!.Name != "Cancelled")
+            .Include(b => b.BookingStatus)
+            .Include(b => b.Currency)
+            .GroupBy(b => new { b.Currency!.Code, b.CurrencyId })
+            .Select(g => new { Currency = g.Key.Code, Total = g.Sum(b => b.TotalPrice) })
+            .OrderByDescending(x => x.Total)
+            .ToListAsync();
+
+        if (!revenueByCurrency.Any())
+            return string.Empty;
+
+        var lines = revenueByCurrency
+            .Where(x => x.Total > 0)
+            .Select(x => $"{x.Currency}: {x.Total.ToString("#,##0")}")
+            .ToList();
+
+        return string.Join("<br/>", lines);
     }
 
     private (DateTime Start, DateTime End) GetPeriodDates(string period)
