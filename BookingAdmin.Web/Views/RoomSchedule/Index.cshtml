@@ -111,13 +111,28 @@
     </div>
 </div>
 
-<!-- Grid -->
+<!-- Grid with Fixed Left Column -->
 <div class="card">
-    <div class="card-body" style="overflow-x: auto; overflow-y: auto; max-height: 600px;">
-        <table class="table table-bordered mb-0 room-schedule-table">
-            <thead class="sticky-top">
-                <tr>
-                    <th style="position: sticky; left: 0; z-index: 11; background: white; min-width: 150px;">Phòng</th>
+    <div class="schedule-container">
+        <!-- Fixed Left Column (Room Names) -->
+        <div class="schedule-left-fixed">
+            <!-- Header -->
+            <div class="schedule-header-left">Phòng</div>
+            <!-- Room Rows -->
+            @foreach (var row in Model.Rows)
+            {
+                <div class="schedule-room-cell">
+                    <strong>@row.RoomCode</strong><br/>
+                    <small class="text-muted">@row.RoomTypeName</small>
+                </div>
+            }
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="schedule-scroll-wrapper">
+            <div class="schedule-grid">
+                <!-- Header Row (Dates) -->
+                <div class="schedule-header-row">
                     @for (int day = 1; day <= Model.DaysInMonth; day++)
                     {
                         var date = new DateTime(Model.SelectedYear, Model.SelectedMonth, day);
@@ -126,21 +141,17 @@
                         var dayNames = new[] { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
                         var bgStyle = isWeekend ? "background-color: rgb(41 102 236 / 34%); color: #d12525;" : "";
 
-                        <th class="text-center day-header" style="min-width: 60px; @bgStyle">
+                        <div class="schedule-day-header text-center" style="@bgStyle">
                             <div>@day</div>
                             <small class="text-muted">@dayNames[(int)dayOfWeek]</small>
-                        </th>
+                        </div>
                     }
-                </tr>
-            </thead>
-            <tbody>
+                </div>
+
+                <!-- Content Rows -->
                 @foreach (var row in Model.Rows)
                 {
-                    <tr>
-                        <td style="position: sticky; left: 0; background: white; z-index: 10; min-width: 150px;">
-                            <strong>@row.RoomCode</strong><br/>
-                            <small class="text-muted">@row.RoomTypeName</small>
-                        </td>
+                    <div class="schedule-content-row">
                         @foreach (var cell in row.Days)
                         {
                             var cellDate = new DateTime(Model.SelectedYear, Model.SelectedMonth, cell.Day);
@@ -150,36 +161,37 @@
 
                             @if (cell.IsEmpty)
                             {
-                                <td class="sched-empty" data-room-id="@row.RoomId" data-day="@cell.Day"
-                                    style="cursor: pointer; @weekendBg"
-                                    onclick="openBookingModal(@row.RoomId, @cell.Day)"></td>
+                                <div class="schedule-cell sched-empty" data-room-id="@row.RoomId" data-day="@cell.Day"
+                                    style="cursor: pointer; grid-column: span @cell.ColSpan; @weekendBg"
+                                    onclick="openBookingModal(@row.RoomId, @cell.Day)"></div>
                             }
                             else if (cell.Block != null && cell.IsStart)
                             {
-                                <td colspan="@cell.ColSpan" class="sched-block" data-block-id="@cell.Block.BlockId"
+                                <div class="schedule-cell sched-block" data-block-id="@cell.Block.BlockId"
+                                    style="grid-column: span @cell.ColSpan;"
                                     onclick="openBlockDetailModal(@cell.Block.BlockId)">
                                     <strong><i class="bi bi-lock"></i> @cell.Block.Partner</strong><br/>
                                     @if (!string.IsNullOrEmpty(cell.Block.Note))
                                     {
                                         <small>@cell.Block.Note</small>
                                     }
-                                </td>
+                                </div>
                             }
                             else if (cell.Booking != null && cell.IsStart)
                             {
                                 var chipColor = cell.Booking.PackageAddedDate == 1 ? "#d97706" : "#2563eb";
-                                <td colspan="@cell.ColSpan" class="sched-booking" data-booking-id="@cell.Booking.BookingId"
-                                    style="background-color: @chipColor; cursor: pointer; color: white; font-size: 0.85rem; padding: 4px;"
+                                <div class="schedule-cell sched-booking" data-booking-id="@cell.Booking.BookingId"
+                                    style="background-color: @chipColor; grid-column: span @cell.ColSpan;"
                                     onclick="openDetailModal(@cell.Booking.BookingId)">
                                     <strong>@cell.Booking.ChannelName</strong><br/>
                                     <small>@cell.Booking.PackageCode</small>
-                                </td>
+                                </div>
                             }
                         }
-                    </tr>
+                    </div>
                 }
-            </tbody>
-        </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -193,22 +205,114 @@
 @await Html.PartialAsync("_BookingDetailDrawer")
 
 <style>
-    .room-schedule-table {
-        border-collapse: collapse;
+    .schedule-container {
+        display: flex;
+        max-height: 600px;
+        border: 1px solid #dee2e6;
+        background: white;
+    }
+
+    /* Fixed Left Column */
+    .schedule-left-fixed {
+        width: 150px;
+        flex-shrink: 0;
+        border-right: 2px solid #dee2e6;
+        overflow-y: auto;
+        background: white;
+        z-index: 100;
+    }
+
+    .schedule-header-left {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 60px;
+        font-weight: bold;
+        border-bottom: 1px solid #dee2e6;
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .schedule-room-cell {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: white;
+    }
+
+    /* Scrollable Area */
+    .schedule-scroll-wrapper {
+        flex: 1;
+        overflow-x: auto;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    /* Grid Container */
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: repeat(var(--day-count), 60px);
+        min-width: min-content;
+        width: 100%;
+    }
+
+    /* Header Row (Dates) */
+    .schedule-header-row {
+        display: contents;
+    }
+
+    .schedule-day-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 60px;
+        border: 1px solid #ddd;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 500;
+        font-size: 0.85rem;
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 11;
+    }
+
+    /* Content Rows */
+    .schedule-content-row {
+        display: contents;
+    }
+
+    .schedule-cell {
+        border: 1px solid #ddd;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
     }
 
     .sched-empty {
-        height: 60px;
-        border: 1px solid #ddd;
+        background: white;
+        cursor: pointer;
+    }
+
+    .sched-empty:hover {
+        background-color: #f8f9fa;
     }
 
     .sched-booking {
         border: 1px solid #ddd;
         text-align: center;
-        min-height: 60px;
-        vertical-align: middle;
+        color: white;
+        font-size: 0.70rem;
+        padding: 4px;
+        cursor: pointer;
         opacity: 0.9;
-        font-size: 0.70;
     }
 
     .sched-booking:hover {
@@ -216,10 +320,8 @@
     }
 
     .sched-block {
-        border: 1px solid #ddd;
+        border: 1px solid #dc3545;
         text-align: center;
-        min-height: 60px;
-        vertical-align: middle;
         background-color: #dc3545 !important;
         color: white !important;
         font-size: 0.70rem;
@@ -230,6 +332,11 @@
 
     .sched-block:hover {
         opacity: 1;
+    }
+
+    /* Synchronize scrolling */
+    .schedule-scroll-wrapper {
+        scroll-behavior: smooth;
     }
 </style>
 
@@ -366,4 +473,16 @@
 
 @section Scripts {
     <script src="~/js/booking-shared.js" asp-append-version="true"></script>
+    <script>
+        // Set grid column count for responsive layout
+        document.addEventListener('DOMContentLoaded', function() {
+            const dayCount = @Model.DaysInMonth;
+            const gridContainer = document.querySelector('.schedule-grid');
+            if (gridContainer) {
+                gridContainer.style.setProperty('--day-count', dayCount);
+                // Also set explicit grid-template-columns for better browser support
+                gridContainer.style.gridTemplateColumns = `repeat(${dayCount}, 60px)`;
+            }
+        });
+    </script>
 }
