@@ -318,4 +318,156 @@ public class RoomScheduleController : BaseController
         var rand = Random.Shared.Next(100000, 999999);
         return $"SYS-{ymd}-{rand}";
     }
+
+    [HttpPost("api/room-blocks")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CreateRoomBlock([FromBody] CreateRoomBlockRequest request)
+    {
+        try
+        {
+            // Validate input
+            if (request == null)
+                return Json(new { success = false, error = "Request body is required" });
+
+            if (request.RoomId <= 0 || request.BoatId <= 0)
+                return Json(new { success = false, error = "Invalid room or boat" });
+
+            if (string.IsNullOrWhiteSpace(request.FromDate) || string.IsNullOrWhiteSpace(request.ToDate))
+                return Json(new { success = false, error = "Dates are required" });
+
+            if (!DateOnly.TryParse(request.FromDate, out var fromDate))
+                return Json(new { success = false, error = "Invalid FromDate format (use YYYY-MM-DD)" });
+
+            if (!DateOnly.TryParse(request.ToDate, out var toDate))
+                return Json(new { success = false, error = "Invalid ToDate format (use YYYY-MM-DD)" });
+
+            if (toDate <= fromDate)
+                return Json(new { success = false, error = "ToDate must be after FromDate" });
+
+            // Check for overlapping bookings
+            var hasBookingConflict = await _db.BookingRooms
+                .Include(br => br.Booking)
+                .Where(br => br.RoomId == request.RoomId
+                    && br.Booking.StatusId != 3
+                    && br.Booking.CheckIn.CompareTo(toDate) < 0
+                    && br.Booking.CheckOut.CompareTo(fromDate) > 0)
+                .AnyAsync();
+
+            if (hasBookingConflict)
+                return Json(new { success = false, error = "Phòng đã có booking trong khoảng thời gian này" });
+
+            // Check for overlapping blocks
+            var hasBlockConflict = await _db.RoomBlocks
+                .Where(rb => rb.RoomId == request.RoomId
+                    && rb.IsActive
+                    && rb.FromDate < toDate
+                    && rb.ToDate > fromDate)
+                .AnyAsync();
+
+            if (hasBlockConflict)
+                return Json(new { success = false, error = "Phòng đã bị block trong khoảng thời gian này" });
+
+            // Parse deadline if provided and convert to UTC
+            DateTime? deadline = null;
+            if (!string.IsNullOrWhiteSpace(request.Deadline))
+            {
+                if (DateTime.TryParse(request.Deadline, out var parsedDeadline))
+                    deadline = DateTime.SpecifyKind(parsedDeadline, DateTimeKind.Utc);
+            }
+
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int.TryParse(userIdString, out int userId);
+
+            var roomBlock = new RoomBlock
+            {
+                BoatId = request.BoatId,
+                RoomId = request.RoomId,
+                FromDate = fromDate,
+                ToDate = toDate,
+                Partner = request.Partner,
+                Deadline = deadline,
+                Note = request.Note,
+                CreatedByUserId = userId > 0 ? userId : null,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.RoomBlocks.Add(roomBlock);
+            await _db.SaveChangesAsync();
+
+            return Json(new { success = true, id = roomBlock.Id, message = "Block phòng thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = "Lỗi: " + ex.Message });
+        }
+    }
+
+    [HttpDelete("api/room-blocks/{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DeleteRoomBlock(int id)
+    {
+        try
+        {
+            var block = await _db.RoomBlocks.FindAsync(id);
+            if (block == null)
+                return Json(new { success = false, error = "Block không tồn tại" });
+
+            block.IsActive = false;
+            _db.RoomBlocks.Update(block);
+            await _db.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Xoá block thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = "Lỗi: " + ex.Message });
+        }
+    }
+
+    [HttpGet("api/room-blocks/{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetRoomBlockDetail(int id)
+    {
+        try
+        {
+            var block = await _db.RoomBlocks
+                .Include(rb => rb.Room)
+                .Include(rb => rb.CreatedByUser)
+                .FirstOrDefaultAsync(rb => rb.Id == id && rb.IsActive);
+
+            if (block == null)
+                return Json(new { success = false, error = "Block không tồn tại" });
+
+            return Json(new
+            {
+                success = true,
+                id = block.Id,
+                roomCode = block.Room?.RoomCode,
+                roomName = block.Room?.RoomName,
+                fromDate = block.FromDate.ToString("dd/MM/yyyy"),
+                toDate = block.ToDate.ToString("dd/MM/yyyy"),
+                partner = block.Partner,
+                deadline = block.Deadline?.ToString("dd/MM/yyyy HH:mm"),
+                note = block.Note,
+                createdBy = block.CreatedByUser?.Username,
+                createdAt = block.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = "Lỗi: " + ex.Message });
+        }
+    }
+
+    public class CreateRoomBlockRequest
+    {
+        public int BoatId { get; set; }
+        public int RoomId { get; set; }
+        public string FromDate { get; set; }
+        public string ToDate { get; set; }
+        public string Partner { get; set; }
+        public string Deadline { get; set; }
+        public string Note { get; set; }
+    }
 }

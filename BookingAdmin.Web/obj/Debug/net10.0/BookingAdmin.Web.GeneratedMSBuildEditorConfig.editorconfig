@@ -206,6 +206,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Cb29raW5nTW9kYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_RoomBlockModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19Sb29tQmxvY2tNb2RhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

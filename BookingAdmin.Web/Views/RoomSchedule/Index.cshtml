@@ -120,7 +120,16 @@
                     <th style="position: sticky; left: 0; z-index: 11; background: white; min-width: 150px;">Phòng</th>
                     @for (int day = 1; day <= Model.DaysInMonth; day++)
                     {
-                        <th class="text-center" style="min-width: 60px;">@day</th>
+                        var date = new DateTime(Model.SelectedYear, Model.SelectedMonth, day);
+                        var dayOfWeek = date.DayOfWeek;
+                        var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
+                        var dayNames = new[] { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
+                        var bgStyle = isWeekend ? "background-color: rgb(41 102 236 / 34%); color: #d12525;" : "";
+
+                        <th class="text-center day-header" style="min-width: 60px; @bgStyle">
+                            <div>@day</div>
+                            <small class="text-muted">@dayNames[(int)dayOfWeek]</small>
+                        </th>
                     }
                 </tr>
             </thead>
@@ -134,19 +143,35 @@
                         </td>
                         @foreach (var cell in row.Days)
                         {
+                            var cellDate = new DateTime(Model.SelectedYear, Model.SelectedMonth, cell.Day);
+                            var cellDayOfWeek = cellDate.DayOfWeek;
+                            var isWeekend = cellDayOfWeek == DayOfWeek.Saturday || cellDayOfWeek == DayOfWeek.Sunday;
+                            var weekendBg = isWeekend ? "background-color: rgba(37, 99, 235, 0.06);" : "";
+
                             @if (cell.IsEmpty)
                             {
                                 <td class="sched-empty" data-room-id="@row.RoomId" data-day="@cell.Day"
-                                    style="cursor: pointer; background-color: #f0f0f0;"
+                                    style="cursor: pointer; @weekendBg"
                                     onclick="openBookingModal(@row.RoomId, @cell.Day)"></td>
                             }
-                            else if (cell.IsStart)
+                            else if (cell.Block != null && cell.IsStart)
                             {
-                                <td colspan="@cell.ColSpan" class="sched-booking" data-booking-id="@cell.Booking!.BookingId"
-                                    style="background-color: @cell.Booking.StatusColor; cursor: pointer; color: white; font-size: 0.85rem; padding: 4px;"
+                                <td colspan="@cell.ColSpan" class="sched-block" data-block-id="@cell.Block.BlockId"
+                                    onclick="openBlockDetailModal(@cell.Block.BlockId)">
+                                    <strong><i class="bi bi-lock"></i> @cell.Block.Partner</strong><br/>
+                                    @if (!string.IsNullOrEmpty(cell.Block.Note))
+                                    {
+                                        <small>@cell.Block.Note</small>
+                                    }
+                                </td>
+                            }
+                            else if (cell.Booking != null && cell.IsStart)
+                            {
+                                var chipColor = cell.Booking.PackageAddedDate == 1 ? "#d97706" : "#2563eb";
+                                <td colspan="@cell.ColSpan" class="sched-booking" data-booking-id="@cell.Booking.BookingId"
+                                    style="background-color: @chipColor; cursor: pointer; color: white; font-size: 0.85rem; padding: 4px;"
                                     onclick="openDetailModal(@cell.Booking.BookingId)">
-                                    <strong>@cell.Booking.Code</strong><br/>
-                                    <small>@cell.Booking.CustomerName</small><br/>
+                                    <strong>@cell.Booking.ChannelName</strong><br/>
                                     <small>@cell.Booking.PackageCode</small>
                                 </td>
                             }
@@ -160,6 +185,9 @@
 
 <!-- Booking Modal -->
 @await Html.PartialAsync("_BookingModal", Model)
+
+<!-- Block Room Modal -->
+@await Html.PartialAsync("_RoomBlockModal", Model)
 
 <!-- Shared Detail Drawer -->
 @await Html.PartialAsync("_BookingDetailDrawer")
@@ -180,9 +208,27 @@
         min-height: 60px;
         vertical-align: middle;
         opacity: 0.9;
+        font-size: 0.70;
     }
 
     .sched-booking:hover {
+        opacity: 1;
+    }
+
+    .sched-block {
+        border: 1px solid #ddd;
+        text-align: center;
+        min-height: 60px;
+        vertical-align: middle;
+        background-color: #dc3545 !important;
+        color: white !important;
+        font-size: 0.70rem;
+        padding: 4px;
+        cursor: pointer;
+        opacity: 0.9;
+    }
+
+    .sched-block:hover {
         opacity: 1;
     }
 </style>
@@ -195,7 +241,126 @@
     }
 
     function blockRoom() {
-        alert('Block phòng feature coming soon');
+        openBlockModal(@Model.SelectedBoatId, null);
+    }
+
+    async function openBlockDetailModal(blockId) {
+        try {
+            const response = await fetch(`/lich-phong/api/room-blocks/${blockId}`);
+
+            // Read as text first
+            const responseText = await response.text();
+            if (!responseText) {
+                alert('Lỗi: Server không trả về dữ liệu');
+                return;
+            }
+
+            let block;
+            try {
+                block = JSON.parse(responseText);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                alert('Lỗi: Dữ liệu từ server không hợp lệ');
+                return;
+            }
+
+            if (!block.success && block.error) {
+                alert('Lỗi: ' + block.error);
+                return;
+            }
+            let html = `
+                <div class="booking-detail-panel">
+                    <div class="detail-group">
+                        <h6 class="group-title">Thông Tin Block</h6>
+                        <div class="detail-row">
+                            <div class="detail-label">Phòng:</div>
+                            <div class="detail-value">${block.roomCode} - ${block.roomName}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Từ Ngày:</div>
+                            <div class="detail-value">${block.fromDate}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Đến Ngày:</div>
+                            <div class="detail-value">${block.toDate}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Đối Tác:</div>
+                            <div class="detail-value">${block.partner || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Hạn Chốt:</div>
+                            <div class="detail-value">${block.deadline || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Ghi Chú:</div>
+                            <div class="detail-value">${block.note || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Tạo Bởi:</div>
+                            <div class="detail-value">${block.createdBy || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Ngày Tạo:</div>
+                            <div class="detail-value">${block.createdAt}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailContent').innerHTML = html;
+
+            // Update footer with delete button
+            const footer = document.querySelector('.drawer-footer');
+            footer.innerHTML = `
+                <button type="button" class="btn btn-danger" onclick="deleteBlock(${blockId})">
+                    <i class="bi bi-trash"></i> Xoá Block
+                </button>
+            `;
+
+            openDetailDrawer();
+        } catch (error) {
+            console.error('Error loading block:', error);
+            alert('Lỗi tải thông tin block');
+        }
+    }
+
+    async function deleteBlock(blockId) {
+        if (!confirm('Bạn chắc chắn muốn xoá block này?')) return;
+
+        try {
+            const response = await fetch(`/lich-phong/api/room-blocks/${blockId}`, {
+                method: 'DELETE'
+            });
+
+            // Read as text first
+            const responseText = await response.text();
+            let data = {};
+
+            if (responseText) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    alert('Lỗi: Server trả về dữ liệu không hợp lệ');
+                    return;
+                }
+            }
+
+            if (data.success === false || (response.status >= 400 && !data.success)) {
+                alert('Lỗi: ' + (data.error || 'Không thể xoá block'));
+                return;
+            }
+
+            if (data.success === true) {
+                alert('Xoá block thành công!');
+                closeDetailDrawer();
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Error deleting block:', error);
+            alert('Lỗi: ' + error.message);
+        }
     }
 </script>
 

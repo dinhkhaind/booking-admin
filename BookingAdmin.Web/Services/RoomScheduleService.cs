@@ -40,10 +40,19 @@ public class RoomScheduleService
             .ThenInclude(b => b.BookingStatus)
             .Include(br => br.Booking)
             .ThenInclude(b => b.Package)
+            .Include(br => br.Booking)
+            .ThenInclude(b => b.Channel)
             .Where(br => rooms.Select(r => r.Id).Contains(br.RoomId)
                 && br.Booking.CheckIn <= monthEnd
                 && br.Booking.CheckOut > monthStart
                 && br.Booking.StatusId != CancelledStatusId)
+            .ToListAsync();
+
+        var roomBlocks = await _db.RoomBlocks
+            .Where(rb => rooms.Select(r => r.Id).Contains(rb.RoomId)
+                && rb.IsActive
+                && rb.FromDate <= monthEnd
+                && rb.ToDate > monthStart)
             .ToListAsync();
 
         var rows = new List<RoomScheduleRow>();
@@ -54,10 +63,11 @@ public class RoomScheduleService
                 RoomId = room.Id,
                 RoomCode = room.RoomCode,
                 RoomName = room.RoomName ?? room.RoomCode,
-                RoomTypeName = room.RoomType?.Name ?? "Unknown"
+                RoomTypeName = room.RoomType?.Name ?? "Unknown",
+                Location = room.Location ?? ""
             };
 
-            var occupancyMap = new Dictionary<int, (BookingChipVm chip, bool isStart, int span)>();
+            var occupancyMap = new Dictionary<int, (object chip, bool isStart, int span, bool isBlock)>();
 
             var roomBookings = bookingRooms
                 .Where(br => br.RoomId == room.Id)
@@ -80,15 +90,53 @@ public class RoomScheduleService
                         BookingId = booking.Id,
                         Code = booking.AgencyBookingCode ?? $"B{booking.Id}",
                         CustomerName = booking.CustomerName ?? "",
+                        ChannelName = booking.Channel?.Name ?? "Unknown",
                         PackageCode = booking.Package?.Code ?? "Unknown",
+                        PackageAddedDate = booking.Package?.AddedDate ?? 0,
                         StatusName = booking.BookingStatus?.Name ?? "Unknown",
                         StatusColor = booking.BookingStatus?.Color ?? "#6c757d"
                     };
 
-                    occupancyMap[startDay] = (chip, true, span);
+                    occupancyMap[startDay] = (chip, true, span, false);
 
                     if (span == 2 && startDay + 1 <= daysInMonth)
-                        occupancyMap[startDay + 1] = (chip, false, span);
+                        occupancyMap[startDay + 1] = (chip, false, span, false);
+                }
+            }
+
+            // Add room blocks to occupancy map
+            var roomBlocksList = roomBlocks.Where(rb => rb.RoomId == room.Id).ToList();
+            foreach (var block in roomBlocksList)
+            {
+                var blockFromDate = block.FromDate;
+                if (blockFromDate < monthStart)
+                    blockFromDate = monthStart;
+
+                var blockToDate = block.ToDate;
+                if (blockToDate > monthEnd)
+                    blockToDate = monthEnd;
+
+                var startDay = blockFromDate.Day;
+                var endDay = blockToDate.AddDays(-1).Day; // Don't color the ToDate day
+                var span = endDay - startDay + 1;
+
+                if (startDay <= daysInMonth && span > 0)
+                {
+                    var blockChip = new BlockChipVm
+                    {
+                        BlockId = block.Id,
+                        Partner = block.Partner ?? "Block",
+                        Note = block.Note ?? ""
+                    };
+
+                    occupancyMap[startDay] = (blockChip, true, span, true);
+
+                    // Mark continuation days (for display purposes, though we use ColSpan)
+                    for (int day = startDay + 1; day <= endDay && day <= daysInMonth; day++)
+                    {
+                        if (!occupancyMap.ContainsKey(day))
+                            occupancyMap[day] = (blockChip, false, span, true);
+                    }
                 }
             }
 
@@ -103,7 +151,8 @@ public class RoomScheduleService
                             Day = day,
                             IsStart = true,
                             ColSpan = entry.span,
-                            Booking = entry.chip
+                            Booking = entry.isBlock ? null : entry.chip as BookingChipVm,
+                            Block = entry.isBlock ? entry.chip as BlockChipVm : null
                         });
                     }
                 }
@@ -114,7 +163,8 @@ public class RoomScheduleService
                         Day = day,
                         IsStart = true,
                         ColSpan = 1,
-                        Booking = null
+                        Booking = null,
+                        Block = null
                     });
                 }
             }

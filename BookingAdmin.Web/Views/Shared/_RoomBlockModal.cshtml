@@ -1,0 +1,214 @@
+@model RoomScheduleViewModel
+
+<div class="modal fade" id="blockRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Block Phòng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="blockRoomForm">
+                    <!-- Row 1: Boat & Room -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tàu</label>
+                            <select id="BlockBoatId" name="BoatId" class="form-select" required>
+                                <option value="">-- Chọn Tàu --</option>
+                                @foreach (var boat in Model.Boats)
+                                {
+                                    <option value="@boat.Id">@boat.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phòng</label>
+                            <select id="BlockRoomId" name="RoomId" class="form-select" required>
+                                <option value="">-- Chọn Phòng --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: From Date & To Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Từ Ngày</label>
+                            <input type="date" id="BlockFromDate" name="FromDate" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Đến Ngày</label>
+                            <input type="date" id="BlockToDate" name="ToDate" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Partner -->
+                    <div class="mb-3">
+                        <label class="form-label">Đối Tác Đề Nghị Block</label>
+                        <input type="text" id="BlockPartner" name="Partner" class="form-control" placeholder="Nhập tên đối tác" />
+                    </div>
+
+                    <!-- Row 4: Deadline (datetime) -->
+                    <div class="mb-3">
+                        <label class="form-label">Hạn Block - Ngày & Giờ Chốt Cuối</label>
+                        <input type="datetime-local" id="BlockDeadline" name="Deadline" class="form-control" />
+                    </div>
+
+                    <!-- Row 5: Note -->
+                    <div class="mb-3">
+                        <label class="form-label">Nội Dung Block / Ghi Chú</label>
+                        <textarea id="BlockNote" name="Note" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-danger" onclick="saveRoomBlock()">
+                    <i class="bi bi-lock"></i> Block Phòng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let blockModalInitData = { boatId: null, date: null };
+
+    // Function to open block room modal
+    function openBlockModal(boatId, date) {
+        blockModalInitData.boatId = boatId;
+        blockModalInitData.date = date;
+        const modal = new bootstrap.Modal(document.getElementById('blockRoomModal'));
+        modal.show();
+    }
+
+    // Initialize modal when shown
+    document.getElementById('blockRoomModal').addEventListener('show.bs.modal', async function () {
+        // Pre-fill boat if provided
+        if (blockModalInitData.boatId) {
+            document.getElementById('BlockBoatId').value = blockModalInitData.boatId;
+            await loadBlockRooms();
+        }
+
+        // Pre-fill from date if provided
+        if (blockModalInitData.date) {
+            document.getElementById('BlockFromDate').value = blockModalInitData.date;
+            document.getElementById('BlockToDate').value = blockModalInitData.date;
+        }
+
+        // Clear modal init data
+        blockModalInitData = { boatId: null, date: null };
+    });
+
+    // Load rooms when boat changes
+    document.getElementById('BlockBoatId').addEventListener('change', loadBlockRooms);
+
+    async function loadBlockRooms() {
+        const boatId = document.getElementById('BlockBoatId').value;
+        const roomSelect = document.getElementById('BlockRoomId');
+
+        if (!boatId) {
+            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/rooms?boatId=${boatId}`);
+            const rooms = await response.json();
+
+            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.id;
+                option.textContent = `${room.roomCode} - ${room.roomName}`;
+                roomSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading rooms:', error);
+            roomSelect.innerHTML = '<option value="">-- Lỗi tải phòng --</option>';
+        }
+    }
+
+    async function saveRoomBlock() {
+        const boatId = document.getElementById('BlockBoatId').value;
+        const roomId = document.getElementById('BlockRoomId').value;
+        const fromDate = document.getElementById('BlockFromDate').value;
+        const toDate = document.getElementById('BlockToDate').value;
+        const partner = document.getElementById('BlockPartner').value || null;
+        const deadline = document.getElementById('BlockDeadline').value || null;
+        const note = document.getElementById('BlockNote').value || null;
+
+        // Client-side validation
+        if (!boatId || !roomId || !fromDate || !toDate) {
+            alert('Vui lòng điền các trường bắt buộc');
+            return;
+        }
+
+        if (new Date(toDate) <= new Date(fromDate)) {
+            alert('Ngày kết thúc phải sau ngày bắt đầu');
+            return;
+        }
+
+        try {
+            const response = await fetch('/lich-phong/api/room-blocks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    boatId: parseInt(boatId),
+                    roomId: parseInt(roomId),
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    partner: partner || null,
+                    deadline: deadline ? new Date(deadline).toISOString() : null,
+                    note: note || null
+                })
+            });
+
+            // Read response as text first to avoid JSON parsing errors
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
+            // Try to parse JSON
+            let data = {};
+            if (responseText) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    alert('Lỗi: Server trả về dữ liệu không hợp lệ');
+                    return;
+                }
+            }
+
+            // Check success status
+            if (data.success === false || (response.status >= 400 && !data.success)) {
+                const errorMsg = data.error || 'Lỗi tạo block phòng';
+                alert('Lỗi: ' + errorMsg);
+                return;
+            }
+
+            if (data.success === true) {
+                alert('Block phòng thành công!');
+                bootstrap.Modal.getInstance(document.getElementById('blockRoomModal')).hide();
+                document.getElementById('blockRoomForm').reset();
+                location.reload();
+            } else {
+                alert('Lỗi: Không rõ lỗi');
+            }
+        } catch (error) {
+            console.error('Error creating block:', error);
+            alert('Lỗi: ' + error.message);
+        }
+    }
+</script>
+
+<style>
+    #blockRoomModal .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    #blockRoomModal .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+</style>

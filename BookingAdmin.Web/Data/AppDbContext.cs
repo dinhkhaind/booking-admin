@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<BookingRoom> BookingRooms => Set<BookingRoom>();
     public DbSet<SaleEntry> SaleEntries => Set<SaleEntry>();
     public DbSet<UserBoat> UserBoats => Set<UserBoat>();
+    public DbSet<RoomBlock> RoomBlocks => Set<RoomBlock>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -152,6 +153,24 @@ public class AppDbContext : DbContext
                 .WithMany(b => b.UserBoats)
                 .HasForeignKey(x => x.BoatId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RoomBlock>(rb =>
+        {
+            rb.HasKey(x => x.Id);
+            rb.HasIndex(x => new { x.RoomId, x.FromDate, x.ToDate });
+            rb.HasOne(x => x.Boat)
+                .WithMany()
+                .HasForeignKey(x => x.BoatId)
+                .OnDelete(DeleteBehavior.Restrict);
+            rb.HasOne(x => x.Room)
+                .WithMany()
+                .HasForeignKey(x => x.RoomId)
+                .OnDelete(DeleteBehavior.Restrict);
+            rb.HasOne(x => x.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

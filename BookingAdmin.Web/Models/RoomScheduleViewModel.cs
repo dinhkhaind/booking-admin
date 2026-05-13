@@ -30,16 +30,18 @@ public class RoomScheduleRow
     public string RoomCode { get; set; } = string.Empty;
     public string RoomName { get; set; } = string.Empty;
     public string RoomTypeName { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
     public List<DayCell> Days { get; set; } = new();
 }
 
 public class DayCell
 {
     public int Day { get; set; }
-    public bool IsEmpty => Booking == null;
+    public bool IsEmpty => Booking == null && Block == null;
     public bool IsStart { get; set; }
     public int ColSpan { get; set; }
     public BookingChipVm? Booking { get; set; }
+    public BlockChipVm? Block { get; set; }
 }
 
 public class BookingChipVm
@@ -47,9 +49,18 @@ public class BookingChipVm
     public int BookingId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
+    public string ChannelName { get; set; } = string.Empty;
     public string PackageCode { get; set; } = string.Empty;
+    public int PackageAddedDate { get; set; }
     public string StatusName { get; set; } = string.Empty;
     public string StatusColor { get; set; } = string.Empty;
+}
+
+public class BlockChipVm
+{
+    public int BlockId { get; set; }
+    public string Partner { get; set; } = string.Empty;
+    public string Note { get; set; } = string.Empty;
 }
 
 public class BookingCreateRequest
