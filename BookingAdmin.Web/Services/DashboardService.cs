@@ -99,7 +99,7 @@ public class DashboardService
                 // Group by currency
                 var currencyBreakdown = periodBookings
                     .GroupBy(b => b.Currency!.Code)
-                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice));
 
                 row.PeriodSales[label] = currencyBreakdown;
 
@@ -213,7 +213,7 @@ public class DashboardService
                 // Group by currency
                 var currencyBreakdown = periodBookings
                     .GroupBy(b => b.Currency!.Code)
-                    .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice));
 
                 row.PeriodSales[label] = currencyBreakdown;
 

@@ -358,9 +358,9 @@
                     <th>Lượng phòng</th>
                     <th>Doanh số</th>
                     <th>Lượng khách</th>
-                    <th>Phòng huỷ</th>
-                    <th>Doanh số huỷ</th>
-                    <th>Khách huỷ</th>
+                    <th style="background-color: #eb5050;">Phòng huỷ</th>
+                    <th style="background-color: #eb5050;">Doanh số huỷ</th>
+                    <th style="background-color: #eb5050;">Khách huỷ</th>
                 </tr>
             </thead>
             <tbody>
@@ -416,13 +416,11 @@
 @if (Model.EmployeeLastminData.Any())
 {
     <div class="report-container">
-        <div class="report-title cyan">Lastmin theo NV Sale</div>
+        <div class="report-title cyan">Lastmin 3 Ngày - NV Sale</div>
         <table class="report-table">
             <thead>
                 <tr>
                     <th>Nhân viên</th>
-                    <th>Phòng 1 ngày</th>
-                    <th>Doanh số 1 ngày</th>
                     <th>Phòng 3 ngày</th>
                     <th>Doanh số 3 ngày</th>
                 </tr>
@@ -432,24 +430,6 @@
                 {
                     <tr @(row.EmployeeName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
                         <td>@row.EmployeeName</td>
-                        <td class="number-format">@row.Rooms1Day</td>
-                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
-                            @if (row.Sales1DayByCurrency.Any())
-                            {
-                                @foreach (var kvp in row.Sales1DayByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
-                                {
-                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
-                                }
-                                @if (!row.Sales1DayByCurrency.Any(x => x.Value > 0))
-                                {
-                                    <div>-</div>
-                                }
-                            }
-                            else
-                            {
-                                <div>-</div>
-                            }
-                        </td>
                         <td class="number-format">@row.Rooms3Days</td>
                         <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
                             @if (row.Sales3DaysByCurrency.Any())
@@ -483,8 +463,6 @@
             <thead>
                 <tr>
                     <th>Channel</th>
-                    <th>Phòng 1 ngày</th>
-                    <th>Doanh số 1 ngày</th>
                     <th>Phòng 3 ngày</th>
                     <th>Doanh số 3 ngày</th>
                 </tr>
@@ -494,24 +472,6 @@
                 {
                     <tr @(row.ChannelName == "TỔNG CỘNG" ? "class=\"total-row\"" : "")>
                         <td>@row.ChannelName</td>
-                        <td class="number-format">@row.Rooms1Day</td>
-                        <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
-                            @if (row.Sales1DayByCurrency.Any())
-                            {
-                                @foreach (var kvp in row.Sales1DayByCurrency.Where(x => x.Value > 0).OrderByDescending(x => x.Value))
-                                {
-                                    <div>@kvp.Key: @kvp.Value.ToString("#,##0")</div>
-                                }
-                                @if (!row.Sales1DayByCurrency.Any(x => x.Value > 0))
-                                {
-                                    <div>-</div>
-                                }
-                            }
-                            else
-                            {
-                                <div>-</div>
-                            }
-                        </td>
                         <td class="number-format">@row.Rooms3Days</td>
                         <td class="number-format" style="white-space: pre-line; vertical-align: middle;">
                             @if (row.Sales3DaysByCurrency.Any())
