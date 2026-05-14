@@ -135,62 +135,55 @@
     }
 </style>
 
-<div class="dashboard-header">
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+    <select class="form-select" style="max-width: 180px; font-size: 0.85rem; padding: 0.3rem 0.5rem;" onchange="changeBoat(this.value)">
+        @foreach (var boat in (List<BookingAdmin.Web.Models.Boat>)ViewBag.Boats ?? new List<BookingAdmin.Web.Models.Boat>())
+        {
+            <option value="@boat.Id" selected="@(boat.Id == (ViewBag.SelectedBoatId ?? 0))">@boat.Name</option>
+        }
+    </select>
+    
     <div>
-        <h2>Báo cáo Doanh số - @Model.BoatName</h2>
-        <p class="text-muted" style="margin-top: 0.5rem;">Từ @Model.PeriodStart.ToString("dd/MM/yyyy") đến @Model.PeriodEnd.ToString("dd/MM/yyyy")</p>
-        @if (!string.IsNullOrEmpty(Model.RevenueByCurrency))
-        {
-            <div style="margin-top: 0.75rem; font-size: 0.95rem;">
-                <strong>Doanh Thu:</strong>
-                <div style="margin-top: 0.25rem; color: #666;">
-                    @Html.Raw(Model.RevenueByCurrency)
-                </div>
-            </div>
-        }
+        <p style="font-size: 0.8rem; color: #666; margin: 0; margin-top: 0.2rem;">Từ  @Model.PeriodStart.ToString("dd/MM/yyyy") </p>
+        <p style="font-size: 0.8rem; color: #666; margin: 0; margin-top: 0.2rem;">Đến @Model.PeriodEnd.ToString("dd/MM/yyyy")</p>
     </div>
-    <form method="get" style="display: flex; gap: 0.5rem; align-items: center;">
-        @if (Model.Period == "custom")
-        {
-            <a href="@Url.Action("ExportExcel", new { fromDate = Model.PeriodStart.ToString("yyyy-MM-dd"), toDate = Model.PeriodEnd.ToString("yyyy-MM-dd") })" class="export-btn">
-                <i class="bi bi-download"></i> Export Excel
-            </a>
-        }
-        else
-        {
-            <a href="@Url.Action("ExportExcel", new { period = Model.Period })" class="export-btn">
-                <i class="bi bi-download"></i> Export Excel
-            </a>
-        }
-    </form>
-</div>
 
-<div style="margin-bottom: 2rem;">
-    <strong>Chọn kỳ báo cáo:</strong>
-    <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-        <a href="@Url.Action("Index", new { period = "week" })" class="period-button @(Model.Period == "week" ? "active" : "")">
+    <div style="display: flex; gap: 0.3rem; align-items: center;">
+        <a href="@Url.Action("Index", new { boatId = Model.BoatId, period = "week" })" class="period-button @(Model.Period == "week" ? "active" : "")" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">
             Tuần này
         </a>
-        <a href="@Url.Action("Index", new { period = "month" })" class="period-button @(Model.Period == "month" ? "active" : "")">
+        <a href="@Url.Action("Index", new { boatId = Model.BoatId, period = "month" })" class="period-button @(Model.Period == "month" ? "active" : "")" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">
             Tháng này
         </a>
-        <a href="@Url.Action("Index", new { period = "year" })" class="period-button @(Model.Period == "year" ? "active" : "")">
+        <a href="@Url.Action("Index", new { boatId = Model.BoatId, period = "year" })" class="period-button @(Model.Period == "year" ? "active" : "")" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">
             Năm này
         </a>
-        <button type="button" class="period-button @(Model.Period == "custom" ? "active" : "")" onclick="toggleCustomDate()" id="customBtn">
+        <button type="button" class="period-button @(Model.Period == "custom" ? "active" : "")" onclick="toggleCustomDate()" id="customBtn" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">
             Tùy chỉnh
         </button>
-
-        <!-- Custom Date Inputs -->
-        <div id="customDateInputs" style="display: @(Model.Period == "custom" ? "flex" : "none"); gap: 0.5rem; align-items: center;">
-            <input type="date" id="fromDate" class="form-control" style="width: 150px; padding: 0.5rem; font-size: 0.9rem;" />
-            <span>–</span>
-            <input type="date" id="toDate" class="form-control" style="width: 150px; padding: 0.5rem; font-size: 0.9rem;" />
-            <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomDate()" style="padding: 0.5rem 1rem;">
-                Áp dụng
-            </button>
-        </div>
     </div>
+
+    <div id="customDateInputs" style="display: @(Model.Period == "custom" ? "flex" : "none"); gap: 0.3rem; align-items: center;">
+        <input type="date" id="fromDate" class="form-control" style="width: 130px; padding: 0.3rem 0.5rem; font-size: 0.8rem;" />
+        <span style="font-size: 0.8rem;">–</span>
+        <input type="date" id="toDate" class="form-control" style="width: 130px; padding: 0.3rem 0.5rem; font-size: 0.8rem;" />
+        <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomDate()" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">
+            Áp dụng
+        </button>
+    </div>
+
+    @if (Model.Period == "custom")
+    {
+        <a href="@Url.Action("ExportExcel", new { boatId = Model.BoatId, fromDate = Model.PeriodStart.ToString("yyyy-MM-dd"), toDate = Model.PeriodEnd.ToString("yyyy-MM-dd") })" class="export-btn" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; margin-left: auto;">
+            <i class="bi bi-download"></i> Export
+        </a>
+    }
+    else
+    {
+        <a href="@Url.Action("ExportExcel", new { boatId = Model.BoatId, period = Model.Period })" class="export-btn" style="padding: 0.3rem 0.75rem; font-size: 0.8rem; margin-left: auto;">
+            <i class="bi bi-download"></i> Export
+        </a>
+    }
 </div>
 
 <script>
@@ -224,7 +217,11 @@
             return;
         }
 
-        window.location.href = `@Url.Action("Index")?fromDate=${fromDate}&toDate=${toDate}`;
+        window.location.href = `@Url.Action("Index")?boatId=@Model.BoatId&fromDate=${fromDate}&toDate=${toDate}`;
+    }
+
+    function changeBoat(boatId) {
+        window.location.href = `@Url.Action("Index")?boatId=${boatId}`;
     }
 </script>
 

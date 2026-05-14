@@ -18,19 +18,28 @@ public class DashboardController : BaseController
         _dashboardService = dashboardService;
     }
 
-    public async Task<IActionResult> Index(string? period = null, string? fromDate = null, string? toDate = null)
+    public async Task<IActionResult> Index(int? boatId = null, string? period = null, string? fromDate = null, string? toDate = null)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         int.TryParse(userIdString, out int userId);
 
-        var selectedBoatId = HttpContext.Session.GetInt32("SelectedBoatId");
-        if (!selectedBoatId.HasValue)
-        {
-            var allowedBoatIds = await GetAllowedBoatIds(userId);
-            if (!allowedBoatIds.Any())
-                return View(new DashboardViewModel());
+        var allowedBoatIds = await GetAllowedBoatIds(userId);
+        if (!allowedBoatIds.Any())
+            return View(new DashboardViewModel());
 
-            selectedBoatId = allowedBoatIds.First();
+        // Handle boat selection
+        int selectedBoatId;
+        if (boatId.HasValue && allowedBoatIds.Contains(boatId.Value))
+        {
+            selectedBoatId = boatId.Value;
+            HttpContext.Session.SetInt32("SelectedBoatId", selectedBoatId);
+        }
+        else
+        {
+            var sessionBoatId = HttpContext.Session.GetInt32("SelectedBoatId");
+            selectedBoatId = (sessionBoatId.HasValue && allowedBoatIds.Contains(sessionBoatId.Value))
+                ? sessionBoatId.Value
+                : allowedBoatIds.First();
         }
 
         var boat = await _db.Boats.FindAsync(selectedBoatId);
@@ -56,22 +65,27 @@ public class DashboardController : BaseController
         }
 
         var periodLabels = _dashboardService.GetPeriodLabels(displayPeriod, periodStart, periodEnd);
-        var revenueByCurrency = await GetRevenueByCurrencyAsync(selectedBoatId.Value, periodStart, periodEnd);
+        var revenueByCurrency = await GetRevenueByCurrencyAsync(selectedBoatId, periodStart, periodEnd);
+
+        // Get all allowed boats for dropdown
+        var boats = await _db.Boats.Where(b => allowedBoatIds.Contains(b.Id)).OrderBy(b => b.Name).ToListAsync();
+        ViewBag.Boats = boats;
+        ViewBag.SelectedBoatId = selectedBoatId;
 
         var model = new DashboardViewModel
         {
-            BoatId = selectedBoatId.Value,
+            BoatId = selectedBoatId,
             BoatName = boat.Name,
             Period = displayPeriod,
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
             PeriodLabels = periodLabels,
             RevenueByCurrency = revenueByCurrency,
-            EmployeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels),
-            EmployeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId.Value, displayPeriod, periodStart, periodEnd, periodLabels),
-            ChannelSummaryData = await _dashboardService.GetChannelSummaryDataAsync(selectedBoatId.Value, periodStart, periodEnd),
-            EmployeeLastminData = await _dashboardService.GetEmployeeLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd),
-            ChannelLastminData = await _dashboardService.GetChannelLastminDataAsync(selectedBoatId.Value, periodStart, periodEnd)
+            EmployeeSalesData = await _dashboardService.GetEmployeeSalesDataAsync(selectedBoatId, displayPeriod, periodStart, periodEnd, periodLabels),
+            EmployeeCancellationData = await _dashboardService.GetEmployeeCancellationDataAsync(selectedBoatId, displayPeriod, periodStart, periodEnd, periodLabels),
+            ChannelSummaryData = await _dashboardService.GetChannelSummaryDataAsync(selectedBoatId, periodStart, periodEnd),
+            EmployeeLastminData = await _dashboardService.GetEmployeeLastminDataAsync(selectedBoatId, periodStart, periodEnd),
+            ChannelLastminData = await _dashboardService.GetChannelLastminDataAsync(selectedBoatId, periodStart, periodEnd)
         };
 
         return View(model);

@@ -1,5 +1,6 @@
 using BookingAdmin.Web.Models;
 using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookingAdmin.Web.Data;
 
@@ -7,6 +8,21 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(AppDbContext db)
     {
+        // Seed colors for existing RoomTypes that don't have colors
+        var colorPalette = new[] { "#2563eb", "#059669", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#be185d", "#65a30d", "#ea580c", "#0d9488" };
+        var roomTypesWithoutColor = await db.RoomTypes.Where(rt => rt.Color == null).OrderBy(rt => rt.Id).ToListAsync();
+        var colorIndex = 0;
+        foreach (var rt in roomTypesWithoutColor)
+        {
+            rt.Color = colorPalette[colorIndex % colorPalette.Length];
+            colorIndex++;
+        }
+        if (roomTypesWithoutColor.Any())
+        {
+            db.RoomTypes.UpdateRange(roomTypesWithoutColor);
+            await db.SaveChangesAsync();
+        }
+
         if (db.Users.Any()) return; // Already seeded
 
         // Seed BookingStatuses (must be first for FK)

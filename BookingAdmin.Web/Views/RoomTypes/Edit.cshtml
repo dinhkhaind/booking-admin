@@ -25,6 +25,15 @@
         <span asp-validation-for="BaseCapacity" class="text-danger"></span>
     </div>
 
+    <div class="mb-3">
+        <label asp-for="Color" class="form-label">Color</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <input asp-for="Color" type="color" class="form-control" style="width: 60px; height: 40px; cursor: pointer;" />
+            <input type="text" id="colorText" class="form-control" placeholder="#2563eb" readonly />
+        </div>
+        <span asp-validation-for="Color" class="text-danger"></span>
+    </div>
+
     <div class="mb-3 form-check">
         <input asp-for="IsActive" type="checkbox" class="form-check-input" />
         <label asp-for="IsActive" class="form-check-label">Active</label>

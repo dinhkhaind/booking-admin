@@ -32,7 +32,8 @@ public class RoomScheduleService
             roomsQuery = roomsQuery.Where(r => r.RoomTypeId == roomTypeId.Value);
 
         var rooms = await roomsQuery
-            .OrderBy(r => r.RoomCode)
+            .OrderBy(r => r.RoomType!.Name)
+            .ThenBy(r => r.RoomCode)
             .ToListAsync();
 
         var bookingRooms = await _db.BookingRooms
@@ -64,6 +65,7 @@ public class RoomScheduleService
                 RoomCode = room.RoomCode,
                 RoomName = room.RoomName ?? room.RoomCode,
                 RoomTypeName = room.RoomType?.Name ?? "Unknown",
+                RoomTypeColor = room.RoomType?.Color,
                 Location = room.Location ?? ""
             };
 

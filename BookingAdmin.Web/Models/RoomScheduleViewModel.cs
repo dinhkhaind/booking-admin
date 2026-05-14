@@ -30,6 +30,7 @@ public class RoomScheduleRow
     public string RoomCode { get; set; } = string.Empty;
     public string RoomName { get; set; } = string.Empty;
     public string RoomTypeName { get; set; } = string.Empty;
+    public string? RoomTypeColor { get; set; }
     public string Location { get; set; } = string.Empty;
     public List<DayCell> Days { get; set; } = new();
 }

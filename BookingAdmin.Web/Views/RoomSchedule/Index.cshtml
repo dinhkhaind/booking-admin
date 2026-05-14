@@ -136,7 +136,7 @@
             @foreach (var row in Model.Rows)
             {
                 <!-- Cột phòng (sticky left) -->
-                <div class="sched-room-info">
+                <div class="sched-room-info" style="@(!string.IsNullOrEmpty(row.RoomTypeColor) ? $"background: {row.RoomTypeColor}80;" : "")">
                     <div class="ri-line1">
                         <span class="ri-code">@row.RoomCode</span>
                         <span class="ri-sep"> – </span>
@@ -225,7 +225,7 @@
     .schedule-grid {
         display: grid;
         /* cột đầu cố định 150px, các cột ngày 55px mỗi cái */
-        grid-template-columns: 150px repeat(var(--day-count, 31), 55px);
+        grid-template-columns: 150px repeat(var(--day-count, 31), 80px);
         min-width: max-content;
     }
 
@@ -303,10 +303,10 @@
     }
     .ri-code { font-weight: 700; }
     .ri-sep  { color: #adb5bd; }
-    .ri-type { font-weight: 400; color: #495057; }
+    .ri-type { font-weight: 400; color: #032950; }
     .ri-line2, .ri-line3 {
         font-size: 0.6rem;
-        color: #6c757d;
+        color: #032950;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -459,7 +459,7 @@
             const grid = document.getElementById('scheduleGrid');
             if (grid) {
                 grid.style.setProperty('--day-count', dayCount);
-                grid.style.gridTemplateColumns = `150px repeat(${dayCount}, 55px)`;
+                grid.style.gridTemplateColumns = `150px repeat(${dayCount}, 80px)`;
             }
         });
     </script>

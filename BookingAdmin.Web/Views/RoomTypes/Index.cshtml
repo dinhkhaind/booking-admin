@@ -13,6 +13,7 @@
         <thead>
             <tr>
                 <th>Name</th>
+                <th>Color</th>
                 <th>Description</th>
                 <th>Base Capacity</th>
                 <th>Status</th>
@@ -24,6 +25,12 @@
             {
                 <tr>
                     <td><strong>@roomType.Name</strong></td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(roomType.Color))
+                        {
+                            <div style="width: 24px; height: 24px; background-color: @roomType.Color; border: 1px solid #ddd; border-radius: 4px; display: inline-block;" title="@roomType.Color"></div>
+                        }
+                    </td>
                     <td>@roomType.Description</td>
                     <td class="text-center">@roomType.BaseCapacity</td>
                     <td>

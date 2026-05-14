@@ -15,6 +15,9 @@ public class RoomType
 
     public int BaseCapacity { get; set; } = 2;
 
+    [MaxLength(7)]
+    public string? Color { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public ICollection<Room> Rooms { get; set; } = new List<Room>();
