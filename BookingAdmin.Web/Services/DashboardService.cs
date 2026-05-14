@@ -273,33 +273,34 @@ public class DashboardService
         var bookings = await _db.Bookings
             .Include(b => b.BookingRooms)
             .Include(b => b.Channel)
+            .Include(b => b.Channel!.ChannelType)
             .Include(b => b.Currency)
             .Where(b => b.BoatId == boatId && b.CheckIn >= periodStartDate && b.CheckIn <= periodEndDate)
             .ToListAsync();
 
-        var channels = await _db.Channels.OrderBy(c => c.Name).ToListAsync();
+        var channelTypes = await _db.ChannelTypes.OrderBy(ct => ct.Name).ToListAsync();
         var result = new List<ChannelSummaryRow>();
 
-        foreach (var channel in channels)
+        foreach (var channelType in channelTypes)
         {
-            var activeBookings = bookings.Where(b => b.ChannelId == channel.Id && b.StatusId != CancelledStatusId).ToList();
-            var cancelledBookings = bookings.Where(b => b.ChannelId == channel.Id && b.StatusId == CancelledStatusId).ToList();
+            var activeBookings = bookings.Where(b => b.Channel!.ChannelTypeId == channelType.Id && b.StatusId != CancelledStatusId).ToList();
+            var cancelledBookings = bookings.Where(b => b.Channel!.ChannelTypeId == channelType.Id && b.StatusId == CancelledStatusId).ToList();
 
             if (!activeBookings.Any() && !cancelledBookings.Any()) continue;
 
-            var row = new ChannelSummaryRow { ChannelName = channel.Name };
+            var row = new ChannelSummaryRow { ChannelName = channelType.Name };
             row.TotalRooms = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
             row.TotalSales = activeBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
             row.TotalSalesByCurrency = activeBookings
                 .GroupBy(b => b.Currency!.Code)
                 .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
-            row.TotalCustomers = activeBookings.Count;
+            row.TotalCustomers = activeBookings.Sum(b => b.AdultCount + b.ChildCount);
             row.CancelledRooms = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity));
             row.CancelledSales = cancelledBookings.Sum(b => b.BookingRooms.Sum(br => br.Quantity * (b.TotalPrice)));
             row.CancelledSalesByCurrency = cancelledBookings
                 .GroupBy(b => b.Currency!.Code)
                 .ToDictionary(g => g.Key, g => g.Sum(b => b.BookingRooms.Sum(br => br.Quantity * b.TotalPrice)));
-            row.CancelledCustomers = cancelledBookings.Count;
+            row.CancelledCustomers = cancelledBookings.Sum(b => b.AdultCount + b.ChildCount);
 
             result.Add(row);
         }

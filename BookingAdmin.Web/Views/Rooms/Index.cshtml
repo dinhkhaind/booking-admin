@@ -1,5 +1,29 @@
 @model IEnumerable<BookingAdmin.Web.Models.Room>
-@{ ViewData["Title"] = "Rooms"; }
+@{
+    ViewData["Title"] = "Rooms";
+    var colorPalette = new[] {
+        "#2563eb","#059669","#d97706","#dc2626","#7c3aed",
+        "#0891b2","#be185d","#65a30d","#ea580c","#0d9488",
+        "#4f46e5","#b45309","#15803d","#c026d3","#0369a1",
+        "#9333ea","#e11d48","#0f766e","#92400e","#1d4ed8"
+    };
+
+    var roomTypeColorMap = new Dictionary<string, string>();
+    var colorIndex = 0;
+
+    // Build color map for room types
+    foreach (var room in Model)
+    {
+        if (room.RoomType != null && !roomTypeColorMap.ContainsKey(room.RoomType.Name))
+        {
+            roomTypeColorMap[room.RoomType.Name] = colorPalette[colorIndex % 20];
+            colorIndex++;
+        }
+    }
+
+    // Group by Boat
+    var groupedRooms = Model.GroupBy(r => r.Boat?.Name ?? "Unknown").OrderBy(g => g.Key);
+}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Rooms</h2>
@@ -8,42 +32,72 @@
     </a>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Room Type</th>
-                <th>Location</th>
-                <th>Bookings</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var room in Model)
-            {
-                <tr>
-                    <td><strong>@room.RoomCode</strong></td>
-                    <td>@room.RoomName</td>
-                    <td>
-                        @if (room.RoomType != null)
-                        {
-                            <span class="badge bg-secondary">@room.RoomType.Name</span>
-                        }
-                        else
-                        {
-                            <span class="text-muted">N/A</span>
-                        }
-                    </td>
-                    <td>@room.Location</td>
-                    <td><span class="badge bg-info">@room.BookingRooms.Count</span></td>
-                    <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<!-- Boat Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2 align-items-end">
+            <div class="flex-grow-1" style="max-width: 300px;">
+                <label class="form-label">Tàu</label>
+                <select name="boatId" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Tất Cả Tàu --</option>
+                    @foreach (var boat in (List<BookingAdmin.Web.Models.Boat>)ViewBag.Boats ?? new List<BookingAdmin.Web.Models.Boat>())
+                    {
+                        <option value="@boat.Id" selected="@(boat.Id == (ViewBag.SelectedBoatId ?? 0))">@boat.Name</option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
 </div>
+
+<!-- Rooms by Boat -->
+@foreach (var boatGroup in groupedRooms)
+{
+    <div class="card mb-4">
+        <!-- Boat Header -->
+        <div class="card-header" style="background-color: #0070c0; color: white; font-weight: bold; padding: 12px; font-size: 1.1rem;">
+            @boatGroup.Key
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Room Type</th>
+                        <th>Location</th>
+                        <th>Bookings</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var room in boatGroup)
+                    {
+                        <tr>
+                            <td><strong>@room.RoomCode</strong></td>
+                            <td>@room.RoomName</td>
+                            <td>
+                                @if (room.RoomType != null)
+                                {
+                                    var badgeColor = roomTypeColorMap.ContainsKey(room.RoomType.Name) ? roomTypeColorMap[room.RoomType.Name] : "#6b7280";
+                                    <span class="badge" style="background-color: @badgeColor; color: white;">@room.RoomType.Name</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </td>
+                            <td>@room.Location</td>
+                            <td><span class="badge bg-info">@room.BookingRooms.Count</span></td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-warning">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

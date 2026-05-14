@@ -111,95 +111,76 @@
     </div>
 </div>
 
-<!-- Grid with Fixed Left Column -->
-<div class="card">
-    <div class="schedule-container">
-        <!-- Fixed Left Column (Room Names) -->
-        <div class="schedule-left-fixed">
-            <!-- Header -->
-            <div class="schedule-header-left">Phòng</div>
-            <!-- Room Rows -->
-            @foreach (var row in Model.Rows)
+<!-- Grid - 1 scroll container duy nhất -->
+<div class="card p-0">
+    <div class="schedule-container" id="scheduleContainer">
+        <div class="schedule-grid" id="scheduleGrid">
+
+            <!-- Header corner (sticky top+left) -->
+            <div class="sched-corner">Phòng</div>
+
+            <!-- Header ngày (sticky top) -->
+            @for (int day = 1; day <= Model.DaysInMonth; day++)
             {
-                <div class="schedule-room-cell">
-                    <!-- Line 1: RoomCode - Location -->
-                    <div class="room-cell-line1">
-                        <span class="room-cell-code">@row.RoomCode</span>
-                        @if (!string.IsNullOrEmpty(row.Location))
-                        {
-                            <span> – </span>
-                            <span class="room-cell-location">@row.Location</span>
-                        }
-                    </div>
-                    <!-- Line 2: RoomName -->
-                    <div class="room-cell-name">@row.RoomName</div>
+                var date = new DateTime(Model.SelectedYear, Model.SelectedMonth, day);
+                var dow = date.DayOfWeek;
+                var isWeekend = dow == DayOfWeek.Saturday || dow == DayOfWeek.Sunday;
+                var dayNames = new[] { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
+                <div class="sched-day-header @(isWeekend ? "is-weekend" : "")">
+                    <div class="day-num">@day</div>
+                    <div class="day-name">@dayNames[(int)dow]</div>
                 </div>
             }
-        </div>
 
-        <!-- Scrollable Content -->
-        <div class="schedule-scroll-wrapper">
-            <div class="schedule-grid">
-                <!-- Header Row (Dates) -->
-                <div class="schedule-header-row">
-                    @for (int day = 1; day <= Model.DaysInMonth; day++)
-                    {
-                        var date = new DateTime(Model.SelectedYear, Model.SelectedMonth, day);
-                        var dayOfWeek = date.DayOfWeek;
-                        var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
-                        var dayNames = new[] { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
-                        var bgStyle = isWeekend ? "background-color: rgb(41 102 236 / 34%); color: #d12525;" : "";
-
-                        <div class="schedule-day-header text-center" style="@bgStyle">
-                            <div>@day</div>
-                            <small class="text-muted">@dayNames[(int)dayOfWeek]</small>
-                        </div>
-                    }
+            <!-- Room rows -->
+            @foreach (var row in Model.Rows)
+            {
+                <!-- Cột phòng (sticky left) -->
+                <div class="sched-room-info">
+                    <div class="ri-line1">
+                        <span class="ri-code">@row.RoomCode</span>
+                        <span class="ri-sep"> – </span>
+                        <span class="ri-type">@row.RoomTypeName</span>
+                    </div>
+                    <div class="ri-line2">@row.RoomName</div>
+                    <div class="ri-line3">@row.Location</div>
                 </div>
 
-                <!-- Content Rows -->
-                @foreach (var row in Model.Rows)
+                <!-- Các ô ngày -->
+                @foreach (var cell in row.Days)
                 {
-                    <div class="schedule-content-row">
-                        @foreach (var cell in row.Days)
-                        {
-                            var cellDate = new DateTime(Model.SelectedYear, Model.SelectedMonth, cell.Day);
-                            var cellDayOfWeek = cellDate.DayOfWeek;
-                            var isWeekend = cellDayOfWeek == DayOfWeek.Saturday || cellDayOfWeek == DayOfWeek.Sunday;
-                            var weekendBg = isWeekend ? "background-color: rgba(37, 99, 235, 0.06);" : "";
+                    var cellDate = new DateTime(Model.SelectedYear, Model.SelectedMonth, cell.Day);
+                    var isWeekend = cellDate.DayOfWeek == DayOfWeek.Saturday || cellDate.DayOfWeek == DayOfWeek.Sunday;
 
-                            @if (cell.IsEmpty)
-                            {
-                                <div class="schedule-cell sched-empty" data-room-id="@row.RoomId" data-day="@cell.Day"
-                                    style="cursor: pointer; grid-column: span @cell.ColSpan; @weekendBg"
-                                    onclick="openBookingModal(@row.RoomId, @cell.Day)"></div>
-                            }
-                            else if (cell.Block != null && cell.IsStart)
-                            {
-                                <div class="schedule-cell sched-block" data-block-id="@cell.Block.BlockId"
-                                    style="grid-column: span @cell.ColSpan;"
-                                    onclick="openBlockDetailModal(@cell.Block.BlockId)">
-                                    <strong><i class="bi bi-lock"></i> @cell.Block.Partner</strong><br/>
-                                    @if (!string.IsNullOrEmpty(cell.Block.Note))
-                                    {
-                                        <small>@cell.Block.Note</small>
-                                    }
-                                </div>
-                            }
-                            else if (cell.Booking != null && cell.IsStart)
-                            {
-                                var chipColor = cell.Booking.PackageAddedDate == 1 ? "#d97706" : "#2563eb";
-                                <div class="schedule-cell sched-booking" data-booking-id="@cell.Booking.BookingId"
-                                    style="background-color: @chipColor; grid-column: span @cell.ColSpan;"
-                                    onclick="openDetailModal(@cell.Booking.BookingId)">
-                                    <div class="booking-chip-line1">@cell.Booking.ChannelName</div>
-                                    <div class="booking-chip-line2">@cell.Booking.PackageCode</div>
-                                </div>
-                            }
-                        }
-                    </div>
+                    if (cell.IsEmpty)
+                    {
+                        <div class="sched-cell sched-empty @(isWeekend ? "is-weekend-col" : "")"
+                             style="grid-column: span @cell.ColSpan"
+                             onclick="openBookingModal(@row.RoomId, @cell.Day)">
+                        <span class="cell-add-btn">+</span>     
+                        </div>
+                    }
+                    else if (cell.Block != null && cell.IsStart)
+                    {
+                        <div class="sched-cell sched-block"
+                             style="grid-column: span @cell.ColSpan"
+                             onclick="openBlockDetailModal(@cell.Block.BlockId)">
+                            <i class="bi bi-lock"></i> @cell.Block.Partner
+                        </div>
+                    }
+                    else if (cell.Booking != null && cell.IsStart)
+                    {
+                        var chipColor = cell.Booking.PackageAddedDate == 1 ? "#d97706" : "#2563eb";
+                        <div class="sched-cell sched-booking"
+                             style="background:@chipColor; grid-column: span @cell.ColSpan"
+                             onclick="openDetailModal(@cell.Booking.BookingId)">
+                            <div class="chip-l1">@cell.Booking.ChannelName</div>
+                            <div class="chip-l2">@cell.Booking.PackageCode</div>
+                        </div>
+                    }
                 }
-            </div>
+            }
+
         </div>
     </div>
 </div>
@@ -214,12 +195,11 @@
 @await Html.PartialAsync("_BookingDetailDrawer")
 
 <style>
-    /* Metric Cards */
+    /* ── Metric Cards ── */
     .metric-card .card-body {
         padding: 0.5rem 0.75rem !important;
         text-align: center;
     }
-
     .metric-label {
         font-size: 0.7rem;
         color: #6c757d;
@@ -227,190 +207,180 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-
     .metric-value {
         font-size: 0.85rem;
         font-weight: 600;
         margin: 0;
     }
 
+    /* ── Schedule: 1 scroll container duy nhất ── */
     .schedule-container {
-        display: flex;
-        max-height: 600px;
+        overflow: auto;
+        max-height: calc(100vh - 280px);
         border: 1px solid #dee2e6;
+        border-radius: 4px;
         background: white;
     }
 
-    /* Fixed Left Column */
-    .schedule-left-fixed {
-        width: 150px;
-        flex-shrink: 0;
-        border-right: 2px solid #dee2e6;
-        overflow-y: auto;
-        background: white;
-        z-index: 100;
+    .schedule-grid {
+        display: grid;
+        /* cột đầu cố định 150px, các cột ngày 55px mỗi cái */
+        grid-template-columns: 150px repeat(var(--day-count, 31), 55px);
+        min-width: max-content;
     }
 
-    .schedule-header-left {
+    /* ── Header corner: sticky top + left ── */
+    .sched-corner {
+        position: sticky;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        background: #f8f9fa;
+        border-right: 2px solid #ced4da;
+        border-bottom: 2px solid #ced4da;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 60px;
-        font-weight: bold;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #dee2e6;
-        background: white;
+        font-weight: 700;
+        font-size: 0.8rem;
+        height: 55px;
+    }
+
+    /* ── Header ngày: sticky top ── */
+    .sched-day-header {
         position: sticky;
         top: 0;
         z-index: 10;
-    }
-
-    .schedule-room-cell {
-        padding: 6px 8px;
-        border-bottom: 1px solid #ddd;
-        min-height: 70px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 3px;
         background: white;
-    }
-
-    .room-cell-line1 {
-        font-size: 0.75rem;
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-    .room-cell-code {
-        font-weight: 700;
-    }
-
-    .room-cell-location {
-        font-size: 0.6rem;
-        color: #6c757d;
-        font-weight: normal;
-    }
-
-    .room-cell-name {
-        font-size: 0.6rem;
-        color: #6c757d;
-        line-height: 1.3;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* Scrollable Area */
-    .schedule-scroll-wrapper {
-        flex: 1;
-        overflow-x: auto;
-        overflow-y: auto;
-        position: relative;
-    }
-
-    /* Grid Container */
-    .schedule-grid {
-        display: grid;
-        grid-template-columns: repeat(var(--day-count), 60px);
-        min-width: min-content;
-        width: 100%;
-    }
-
-    /* Header Row (Dates) */
-    .schedule-header-row {
-        display: contents;
-    }
-
-    .schedule-day-header {
+        border: 1px solid #e9ecef;
+        border-bottom: 2px solid #ced4da;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 60px;
-        border: 1px solid #ddd;
-        border-bottom: 2px solid #dee2e6;
-        font-weight: 500;
+        height: 55px;
+    }
+    .sched-day-header.is-weekend {
+        background: rgba(37, 99, 235, 0.08);
+    }
+    .day-num {
         font-size: 0.85rem;
-        background: white;
+        font-weight: 600;
+        line-height: 1;
+    }
+    .day-name {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    .sched-day-header.is-weekend .day-num,
+    .sched-day-header.is-weekend .day-name {
+        color: #dc2626;
+    }
+
+    /* ── Cột phòng: sticky left ── */
+    .sched-room-info {
         position: sticky;
-        top: 0;
-        z-index: 11;
-    }
-
-    /* Content Rows */
-    .schedule-content-row {
-        display: contents;
-    }
-
-    .schedule-cell {
-        border: 1px solid #ddd;
-        min-height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px;
-    }
-
-    .sched-empty {
+        left: 0;
+        z-index: 5;
         background: white;
-        cursor: pointer;
-    }
-
-    .sched-empty:hover {
-        background-color: #f8f9fa;
-    }
-
-    .sched-booking {
-        border: 1px solid #ddd;
-        color: white;
-        padding: 3px 4px;
-        cursor: pointer;
-        opacity: 0.9;
-        display: flex !important;
+        border-right: 2px solid #ced4da;
+        border-bottom: 1px solid #e9ecef;
+        padding: 6px 8px;
+        min-height: 65px;
+        display: flex;
         flex-direction: column;
-        align-items: center;
         justify-content: center;
         gap: 2px;
     }
+    .ri-line1 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .ri-code { font-weight: 700; }
+    .ri-sep  { color: #adb5bd; }
+    .ri-type { font-weight: 400; color: #495057; }
+    .ri-line2, .ri-line3 {
+        font-size: 0.6rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+    }
 
-    .booking-chip-line1 {
+    /* ── Cells ── */
+    .sched-cell {
+        border: 1px solid #e9ecef;
+        min-height: 65px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3px 4px;
+    }
+
+    .sched-empty {
+        cursor: pointer;
+        background: white;
+    }
+    .sched-empty:hover { background: #f0f4ff; }
+    .sched-empty.is-weekend-col { background: rgba(37, 99, 235, 0.04); }
+    .sched-empty.is-weekend-col:hover { background: #e8effe; }
+
+    .sched-booking {
+        color: white;
+        cursor: pointer;
+        padding: 4px 5px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 2px;
+        opacity: 0.92;
+    }
+    .sched-booking:hover { opacity: 1; }
+    .chip-l1 {
         font-weight: 600;
         font-size: 0.75rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 100%;
         width: 100%;
     }
-
-    .booking-chip-line2 {
-        font-size: 0.7rem;
+    .chip-l2 {
+        font-size: 0.68rem;
         opacity: 0.85;
     }
 
-    .sched-booking:hover {
-        opacity: 1;
-    }
-
     .sched-block {
-        border: 1px solid #dc3545;
-        text-align: center;
-        background-color: #dc3545 !important;
+        background: #dc3545 !important;
         color: white !important;
-        font-size: 0.70rem;
-        padding: 4px;
+        font-size: 0.7rem;
         cursor: pointer;
         opacity: 0.9;
+        text-align: center;
     }
-
-    .sched-block:hover {
-        opacity: 1;
+    .sched-block:hover { opacity: 1; }
+    .cell-add-btn {
+        display: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #2563eb;
+        color: white;
+        font-size: 1rem;
+        line-height: 22px;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
     }
-
-    /* Synchronize scrolling */
-    .schedule-scroll-wrapper {
-        scroll-behavior: smooth;
+    .sched-empty:hover .cell-add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
 
@@ -428,118 +398,54 @@
     async function openBlockDetailModal(blockId) {
         try {
             const response = await fetch(`/lich-phong/api/room-blocks/${blockId}`);
-
-            // Read as text first
             const responseText = await response.text();
-            if (!responseText) {
-                alert('Lỗi: Server không trả về dữ liệu');
-                return;
-            }
+            if (!responseText) { alert('Lỗi: Server không trả về dữ liệu'); return; }
 
             let block;
-            try {
-                block = JSON.parse(responseText);
-            } catch (e) {
-                console.error('JSON parse error:', e);
-                alert('Lỗi: Dữ liệu từ server không hợp lệ');
-                return;
-            }
+            try { block = JSON.parse(responseText); }
+            catch (e) { alert('Lỗi: Dữ liệu từ server không hợp lệ'); return; }
 
-            if (!block.success && block.error) {
-                alert('Lỗi: ' + block.error);
-                return;
-            }
-            let html = `
+            if (!block.success && block.error) { alert('Lỗi: ' + block.error); return; }
+
+            document.getElementById('detailContent').innerHTML = `
                 <div class="booking-detail-panel">
                     <div class="detail-group">
                         <h6 class="group-title">Thông Tin Block</h6>
-                        <div class="detail-row">
-                            <div class="detail-label">Phòng:</div>
-                            <div class="detail-value">${block.roomCode} - ${block.roomName}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Từ Ngày:</div>
-                            <div class="detail-value">${block.fromDate}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Đến Ngày:</div>
-                            <div class="detail-value">${block.toDate}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Đối Tác:</div>
-                            <div class="detail-value">${block.partner || '-'}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Hạn Chốt:</div>
-                            <div class="detail-value">${block.deadline || '-'}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Ghi Chú:</div>
-                            <div class="detail-value">${block.note || '-'}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Tạo Bởi:</div>
-                            <div class="detail-value">${block.createdBy || '-'}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label">Ngày Tạo:</div>
-                            <div class="detail-value">${block.createdAt}</div>
-                        </div>
+                        <div class="detail-row"><div class="detail-label">Phòng:</div><div class="detail-value">${block.roomCode} - ${block.roomName}</div></div>
+                        <div class="detail-row"><div class="detail-label">Từ Ngày:</div><div class="detail-value">${block.fromDate}</div></div>
+                        <div class="detail-row"><div class="detail-label">Đến Ngày:</div><div class="detail-value">${block.toDate}</div></div>
+                        <div class="detail-row"><div class="detail-label">Đối Tác:</div><div class="detail-value">${block.partner || '-'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Hạn Chốt:</div><div class="detail-value">${block.deadline || '-'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Ghi Chú:</div><div class="detail-value">${block.note || '-'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Tạo Bởi:</div><div class="detail-value">${block.createdBy || '-'}</div></div>
+                        <div class="detail-row"><div class="detail-label">Ngày Tạo:</div><div class="detail-value">${block.createdAt}</div></div>
                     </div>
-                </div>
-            `;
+                </div>`;
 
-            document.getElementById('detailContent').innerHTML = html;
-
-            // Update footer with delete button
-            const footer = document.querySelector('.drawer-footer');
-            footer.innerHTML = `
+            document.querySelector('.drawer-footer').innerHTML = `
                 <button type="button" class="btn btn-danger" onclick="deleteBlock(${blockId})">
                     <i class="bi bi-trash"></i> Xoá Block
-                </button>
-            `;
+                </button>`;
 
             openDetailDrawer();
         } catch (error) {
-            console.error('Error loading block:', error);
             alert('Lỗi tải thông tin block');
         }
     }
 
     async function deleteBlock(blockId) {
         if (!confirm('Bạn chắc chắn muốn xoá block này?')) return;
-
         try {
-            const response = await fetch(`/lich-phong/api/room-blocks/${blockId}`, {
-                method: 'DELETE'
-            });
-
-            // Read as text first
+            const response = await fetch(`/lich-phong/api/room-blocks/${blockId}`, { method: 'DELETE' });
             const responseText = await response.text();
             let data = {};
-
             if (responseText) {
-                try {
-                    data = JSON.parse(responseText);
-                } catch (e) {
-                    console.error('JSON parse error:', e);
-                    alert('Lỗi: Server trả về dữ liệu không hợp lệ');
-                    return;
-                }
+                try { data = JSON.parse(responseText); }
+                catch (e) { alert('Lỗi: Server trả về dữ liệu không hợp lệ'); return; }
             }
-
-            if (data.success === false || (response.status >= 400 && !data.success)) {
-                alert('Lỗi: ' + (data.error || 'Không thể xoá block'));
-                return;
-            }
-
-            if (data.success === true) {
-                alert('Xoá block thành công!');
-                closeDetailDrawer();
-                location.reload();
-            }
+            if (data.success === false) { alert('Lỗi: ' + (data.error || 'Không thể xoá block')); return; }
+            if (data.success === true) { alert('Xoá block thành công!'); closeDetailDrawer(); location.reload(); }
         } catch (error) {
-            console.error('Error deleting block:', error);
             alert('Lỗi: ' + error.message);
         }
     }
@@ -548,14 +454,12 @@
 @section Scripts {
     <script src="~/js/booking-shared.js" asp-append-version="true"></script>
     <script>
-        // Set grid column count for responsive layout
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const dayCount = @Model.DaysInMonth;
-            const gridContainer = document.querySelector('.schedule-grid');
-            if (gridContainer) {
-                gridContainer.style.setProperty('--day-count', dayCount);
-                // Also set explicit grid-template-columns for better browser support
-                gridContainer.style.gridTemplateColumns = `repeat(${dayCount}, 60px)`;
+            const grid = document.getElementById('scheduleGrid');
+            if (grid) {
+                grid.style.setProperty('--day-count', dayCount);
+                grid.style.gridTemplateColumns = `150px repeat(${dayCount}, 55px)`;
             }
         });
     </script>

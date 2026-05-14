@@ -14,9 +14,26 @@ public class RoomsController : Controller
     public RoomsController(AppDbContext db) => _db = db;
 
     [AllowAnonymous]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? boatId)
     {
-        var rooms = await _db.Rooms.Include(r => r.RoomType).OrderBy(r => r.RoomCode).ToListAsync();
+        // Get boats for filter dropdown
+        ViewBag.Boats = await _db.Boats.Where(b => b.IsActive).OrderBy(b => b.Name).ToListAsync();
+        ViewBag.SelectedBoatId = boatId;
+
+        // Get rooms
+        var query = _db.Rooms.Include(r => r.RoomType).Include(r => r.Boat).AsQueryable();
+
+        if (boatId.HasValue && boatId.Value > 0)
+        {
+            query = query.Where(r => r.BoatId == boatId.Value);
+        }
+
+        var rooms = await query
+            .OrderBy(r => r.Boat!.Name)
+            .ThenBy(r => r.RoomType!.Name)
+            .ThenBy(r => r.RoomCode)
+            .ToListAsync();
+
         return View(rooms);
     }
 
