@@ -1,6 +1,7 @@
 using BookingAdmin.Web.Data;
 using BookingAdmin.Web.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace BookingAdmin.Web.Services;
 
@@ -34,7 +35,8 @@ public class DashboardService
             var weeks = GetWeeksInMonth(periodStart);
             for (int i = 1; i <= weeks; i++)
             {
-                labels.Add($"Tuần {i}");
+                var weekDates = GetWeekDatesInMonth(periodStart, i);
+                labels.Add($"Tuần {i} ({weekDates.Start:dd/MM}-{weekDates.End:dd/MM})");
             }
         }
         else if (period == "year")
@@ -85,6 +87,7 @@ public class DashboardService
         var employees = await _db.Employees.Where(e => e.IsActive).ToListAsync();
         var result = new List<EmployeeSalesRow>();
 
+        // Process assigned employees
         foreach (var emp in employees)
         {
             var empBookings = bookings.Where(b => b.EmployeeId == emp.Id).ToList();
@@ -114,6 +117,36 @@ public class DashboardService
             }
 
             result.Add(row);
+        }
+
+        // Process unassigned bookings (EmployeeId = NULL)
+        var unassignedBookings = bookings.Where(b => b.EmployeeId == null).ToList();
+        if (unassignedBookings.Any())
+        {
+            var unassignedRow = new EmployeeSalesRow { EmployeeName = "Chưa phân công" };
+
+            foreach (var label in periodLabels)
+            {
+                var periodBookings = GetPeriodBookings(unassignedBookings, period, label, periodStart);
+
+                // Group by currency
+                var currencyBreakdown = periodBookings
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice));
+
+                unassignedRow.PeriodSales[label] = currencyBreakdown;
+
+                // Calculate total and accumulate to TotalByCurrency
+                foreach (var kvp in currencyBreakdown)
+                {
+                    unassignedRow.Total += kvp.Value;
+                    if (!unassignedRow.TotalByCurrency.ContainsKey(kvp.Key))
+                        unassignedRow.TotalByCurrency[kvp.Key] = 0;
+                    unassignedRow.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
+            }
+
+            result.Add(unassignedRow);
         }
 
         // Add total row
@@ -161,11 +194,14 @@ public class DashboardService
         }
         else if (period == "month")
         {
-            var weekNum = int.Parse(label.Replace("Tuần ", ""));
-            var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
-            var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
-            var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
-            return bookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).ToList();
+            var match = Regex.Match(label, @"\d+");
+            if (match.Success && int.TryParse(match.Value, out var weekNum))
+            {
+                var weekDates = GetWeekDatesInMonth(periodStart, weekNum);
+                var weekStartDate = new DateOnly(weekDates.Start.Year, weekDates.Start.Month, weekDates.Start.Day);
+                var weekEndDate = new DateOnly(weekDates.End.Year, weekDates.End.Month, weekDates.End.Day);
+                return bookings.Where(b => b.CheckIn >= weekStartDate && b.CheckIn <= weekEndDate).ToList();
+            }
         }
         else if (period == "year")
         {
@@ -199,6 +235,7 @@ public class DashboardService
         var employees = await _db.Employees.Where(e => e.IsActive).ToListAsync();
         var result = new List<EmployeeSalesRow>();
 
+        // Process assigned employees
         foreach (var emp in employees)
         {
             var empBookings = bookings.Where(b => b.EmployeeId == emp.Id).ToList();
@@ -228,6 +265,36 @@ public class DashboardService
             }
 
             result.Add(row);
+        }
+
+        // Process unassigned bookings (EmployeeId = NULL)
+        var unassignedBookings = bookings.Where(b => b.EmployeeId == null).ToList();
+        if (unassignedBookings.Any())
+        {
+            var unassignedRow = new EmployeeSalesRow { EmployeeName = "Chưa phân công" };
+
+            foreach (var label in periodLabels)
+            {
+                var periodBookings = GetPeriodBookings(unassignedBookings, period, label, periodStart);
+
+                // Group by currency
+                var currencyBreakdown = periodBookings
+                    .GroupBy(b => b.Currency!.Code)
+                    .ToDictionary(g => g.Key, g => g.Sum(b => b.TotalPrice));
+
+                unassignedRow.PeriodSales[label] = currencyBreakdown;
+
+                // Calculate total and accumulate to TotalByCurrency
+                foreach (var kvp in currencyBreakdown)
+                {
+                    unassignedRow.Total += kvp.Value;
+                    if (!unassignedRow.TotalByCurrency.ContainsKey(kvp.Key))
+                        unassignedRow.TotalByCurrency[kvp.Key] = 0;
+                    unassignedRow.TotalByCurrency[kvp.Key] += kvp.Value;
+                }
+            }
+
+            result.Add(unassignedRow);
         }
 
         // Add total row
