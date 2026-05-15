@@ -197,4 +197,4 @@
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/ref/BookingAdmin.Web.dll
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/byukq9fobz-{0}-cjtyhs6gmj-cjtyhs6gmj.gz
 /Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/0d0idqudv9-{0}-a82rk6latn-a82rk6latn.gz
-/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/u560rcdow3-{0}-fzq52kve5y-fzq52kve5y.gz
+/Users/omd-khaivd-m/Desktop/booking/src/BookingAdmin.Web/obj/Debug/net10.0/compressed/u560rcdow3-{0}-2fjq4v5yib-2fjq4v5yib.gz

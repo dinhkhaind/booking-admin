@@ -1,5 +1,6 @@
 // booking-transfer.js
 // Global transfer boat modal functions
+// Reuses the same logic as the booking modal for loading room types and rooms
 // Can be used from any page that includes the _TransferBoatModal partial
 
 let transferModalData = { bookingId: null, currentBoat: null, currentRoom: null, bookingCode: null };
@@ -18,106 +19,79 @@ function openTransferModal(bookingId, bookingCode, boatName, roomCode) {
     // Reset form dropdowns
     document.getElementById('TransferBoatId').value = '';
     document.getElementById('TransferRoomTypeId').innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
-    document.getElementById('TransferRoomId').innerHTML = '<option value="">-- Chọn Loại Phòng Trước --</option>';
+    document.getElementById('TransferRoomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
 
     const modal = new bootstrap.Modal(document.getElementById('transferBoatModal'));
     modal.show();
 }
 
-function initTransferModalListeners() {
-    // Load room types when boat changes
-    const boatSelect = document.getElementById('TransferBoatId');
-    if (boatSelect) {
-        boatSelect.removeEventListener('change', loadTransferRoomTypes);
-        boatSelect.addEventListener('change', loadTransferRoomTypes);
-
-        // Auto-load room types if boat is already selected
-        if (boatSelect.value) {
-            loadTransferRoomTypes();
-        }
-    }
-
-    // Load rooms when room type changes
-    const roomTypeSelect = document.getElementById('TransferRoomTypeId');
-    if (roomTypeSelect) {
-        roomTypeSelect.removeEventListener('change', loadTransferRooms);
-        roomTypeSelect.addEventListener('change', loadTransferRooms);
-
-        // Auto-load rooms if room type is already selected
-        if (roomTypeSelect.value && boatSelect && boatSelect.value) {
-            loadTransferRooms();
-        }
-    }
-}
-
+// Load room types when boat changes (reused logic from booking modal)
 async function loadTransferRoomTypes() {
     const boatId = document.getElementById('TransferBoatId').value;
     const roomTypeSelect = document.getElementById('TransferRoomTypeId');
-    const roomSelect = document.getElementById('TransferRoomId');
 
-    // Reset dependent dropdowns
-    roomTypeSelect.innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
-    roomSelect.innerHTML = '<option value="">-- Chọn Loại Phòng Trước --</option>';
-
-    if (!boatId) return;
+    if (!boatId) {
+        roomTypeSelect.innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
+        document.getElementById('TransferRoomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
+        return;
+    }
 
     try {
-        const response = await fetch(`/api/room-types?boatId=${boatId}`);
-        if (!response.ok) {
-            console.error('Failed to load room types:', response.statusText);
-            return;
-        }
-
+        const response = await fetch(`/api/roomtypes?boatId=${boatId}`);
         const roomTypes = await response.json();
-        if (!Array.isArray(roomTypes) || roomTypes.length === 0) {
-            roomTypeSelect.innerHTML = '<option value="">-- Không có loại phòng --</option>';
-            return;
-        }
 
+        roomTypeSelect.innerHTML = '<option value="">-- Chọn Loại Phòng --</option>';
         roomTypes.forEach(rt => {
             const option = document.createElement('option');
             option.value = rt.id;
             option.textContent = rt.name;
             roomTypeSelect.appendChild(option);
         });
+
+        // Auto-select first room type and load rooms
+        if (roomTypes.length > 0) {
+            roomTypeSelect.value = roomTypes[0].id;
+            await loadTransferRooms();
+        } else {
+            document.getElementById('TransferRoomId').innerHTML = '<option value="">-- Chọn Phòng --</option>';
+        }
     } catch (error) {
         console.error('Error loading room types:', error);
-        roomTypeSelect.innerHTML = '<option value="">-- Lỗi tải dữ liệu --</option>';
+        roomTypeSelect.innerHTML = '<option value="">-- Lỗi tải loại phòng --</option>';
     }
 }
 
+// Load rooms based on BoatId and RoomTypeId (reused logic from booking modal)
 async function loadTransferRooms() {
     const boatId = document.getElementById('TransferBoatId').value;
     const roomTypeId = document.getElementById('TransferRoomTypeId').value;
     const roomSelect = document.getElementById('TransferRoomId');
 
-    // Reset room dropdown
-    roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
-
-    if (!boatId || !roomTypeId) return;
+    if (!boatId || !roomTypeId) {
+        roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+        return;
+    }
 
     try {
-        const response = await fetch(`/api/rooms?boatId=${boatId}&roomTypeId=${roomTypeId}`);
-        if (!response.ok) {
-            console.error('Failed to load rooms:', response.statusText);
-            return;
-        }
-
+        const url = `/api/rooms?boatId=${boatId}&roomTypeId=${roomTypeId}`;
+        const response = await fetch(url);
         const rooms = await response.json();
-        if (!Array.isArray(rooms) || rooms.length === 0) {
-            roomSelect.innerHTML = '<option value="">-- Không có phòng --</option>';
-            return;
-        }
 
+        roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
         rooms.forEach(room => {
             const option = document.createElement('option');
             option.value = room.id;
             option.textContent = `${room.roomCode} - ${room.roomName}`;
             roomSelect.appendChild(option);
         });
+
+        // Auto-select first room
+        if (rooms.length > 0) {
+            roomSelect.value = rooms[0].id;
+        }
     } catch (error) {
         console.error('Error loading rooms:', error);
-        roomSelect.innerHTML = '<option value="">-- Lỗi tải dữ liệu --</option>';
+        roomSelect.innerHTML = '<option value="">-- Lỗi tải phòng --</option>';
     }
 }
 
@@ -169,12 +143,22 @@ async function saveTransferBoat() {
     }
 }
 
-// Initialize listeners when modal is shown
+// Initialize event listeners when modal is shown
+function initTransferModalListeners() {
+    document.getElementById('TransferBoatId').addEventListener('change', async function () {
+        await loadTransferRoomTypes();
+    });
+
+    document.getElementById('TransferRoomTypeId').addEventListener('change', async function () {
+        await loadTransferRooms();
+    });
+}
+
+// Set up modal event listener
 document.addEventListener('DOMContentLoaded', function() {
     const modalElement = document.getElementById('transferBoatModal');
     if (modalElement) {
         modalElement.addEventListener('show.bs.modal', function() {
-            // Small delay to ensure DOM is ready
             setTimeout(initTransferModalListeners, 100);
         });
     }
