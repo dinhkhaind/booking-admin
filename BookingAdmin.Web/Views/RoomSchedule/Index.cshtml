@@ -85,7 +85,7 @@
                         headerEl.style.backgroundColor = '#e8e8e8';
                         headerEl.style.cursor = 'not-allowed';
                     } else if (dayEvent.some(e => e.type === 'Surcharge')) {
-                        headerEl.style.backgroundColor = '#d4edda';
+                        headerEl.classList.add('surcharge-day-header');
                         headerEl.style.cursor = 'help';
                         const reason = dayEvent.find(e => e.type === 'Surcharge')?.reason;
                         if (reason) {
@@ -497,6 +497,14 @@
     .sched-empty[title]:hover,
     .sched-day-header[title]:hover {
         border: 1px dotted #666;
+    }
+
+    /* ── Surcharge day header sticky positioning ── */
+    .surcharge-day-header {
+        position: sticky !important;
+        top: 55px !important;
+        z-index: 9;
+        background: #d4edda !important;
     }
 </style>
 
