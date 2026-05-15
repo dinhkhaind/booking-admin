@@ -177,6 +177,24 @@ public class RoomScheduleService
 
         var metrics = await GetMetricsAsync(boatId, monthStart, monthEnd, bookingRooms);
 
+        // Load boat schedule events
+        var boatEvents = await _db.BoatScheduleEvents
+            .Where(e => e.BoatId == boatId &&
+                       e.FromDate <= monthEnd &&
+                       e.ToDate >= monthStart)
+            .Select(e => new
+            {
+                e.Type,
+                e.Reason,
+                e.FromDate,
+                e.ToDate,
+                FromDateStr = e.FromDate.ToString("yyyy-MM-dd"),
+                ToDateStr = e.ToDate.ToString("yyyy-MM-dd")
+            })
+            .ToListAsync();
+
+        var boatEventsJson = System.Text.Json.JsonSerializer.Serialize(boatEvents, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+
         return new RoomScheduleViewModel
         {
             SelectedBoatId = boatId,
@@ -195,7 +213,8 @@ public class RoomScheduleService
             Channels = channels,
             Currencies = currencies,
             Packages = packages,
-            Statuses = statuses
+            Statuses = statuses,
+            BoatEventsJson = boatEventsJson
         };
     }
 
