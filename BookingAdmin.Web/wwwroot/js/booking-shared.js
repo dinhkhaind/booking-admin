@@ -146,7 +146,14 @@ function editBooking() {
 }
 
 function transferBooking() {
-    alert('Chuyển tàu feature coming soon');
+    if (!currentDetailBookingId) return;
+    closeDetailDrawer();
+    fetch(`/lich-phong/api/bookings/${currentDetailBookingId}`)
+        .then(r => r.json())
+        .then(data => {
+            openTransferModal(currentDetailBookingId, data.systemCode, data.boatName, data.roomCode);
+        })
+        .catch(err => alert('Error loading booking details: ' + err));
 }
 
 function printVoucher() {

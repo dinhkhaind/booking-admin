@@ -1,0 +1,68 @@
+@model BookingAdmin.Web.Models.RoomScheduleViewModel
+
+<div class="modal fade" id="transferBoatModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chuyển Tàu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transferBoatForm">
+                    <!-- Current Booking Info -->
+                    <div class="mb-3 p-3" style="background-color: #f8f9fa; border-radius: 4px;">
+                        <small class="text-muted">Thông tin hiện tại</small>
+                        <div>
+                            <strong>Booking:</strong> <span id="transferCurrentBookingCode">--</span>
+                        </div>
+                        <div>
+                            <strong>Tàu:</strong> <span id="transferCurrentBoatName">--</span>
+                        </div>
+                        <div>
+                            <strong>Phòng:</strong> <span id="transferCurrentRoomName">--</span>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Destination Boat -->
+                    <div class="mb-3">
+                        <label class="form-label">Tàu Đích <span class="text-danger">*</span></label>
+                        <select id="TransferBoatId" name="BoatId" class="form-select" required>
+                            <option value="">-- Chọn Tàu --</option>
+                            @foreach (var boat in Model.Boats)
+                            {
+                                <option value="@boat.Id">@boat.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Room Type -->
+                    <div class="mb-3">
+                        <label class="form-label">Loại Phòng <span class="text-danger">*</span></label>
+                        <select id="TransferRoomTypeId" name="RoomTypeId" class="form-select" required>
+                            <option value="">-- Chọn Tàu Trước --</option>
+                        </select>
+                    </div>
+
+                    <!-- Room -->
+                    <div class="mb-3">
+                        <label class="form-label">Phòng <span class="text-danger">*</span></label>
+                        <select id="TransferRoomId" name="RoomId" class="form-select" required>
+                            <option value="">-- Chọn Loại Phòng Trước --</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="TransferBookingId" name="BookingId" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-warning" onclick="saveTransferBoat()">
+                    <i class="bi bi-arrow-left-right"></i> Chuyển Tàu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

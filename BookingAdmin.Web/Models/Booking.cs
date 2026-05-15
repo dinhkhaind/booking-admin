@@ -77,5 +77,9 @@ public class Booking
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public int? BoatIdOld { get; set; }
+
+    public int? RoomIdOld { get; set; }
+
     public ICollection<BookingRoom> BookingRooms { get; set; } = new List<BookingRoom>();
 }

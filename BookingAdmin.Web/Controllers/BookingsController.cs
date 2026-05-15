@@ -371,6 +371,57 @@ public class BookingsController : BaseController
         return Json(rooms);
     }
 
+    [HttpPost("api/bookings/transfer-boat")]
+    [Authorize(Roles = "Admin,Manager,BookingStaff")]
+    public async Task<IActionResult> TransferBoat([FromBody] TransferBoatRequest request)
+    {
+        var booking = await _db.Bookings
+            .Include(b => b.BookingRooms)
+            .FirstOrDefaultAsync(b => b.Id == request.BookingId);
+
+        if (booking == null)
+            return Json(new { success = false, error = "Không tìm thấy booking" });
+
+        var newBoat = await _db.Boats.FindAsync(request.NewBoatId);
+        if (newBoat == null)
+            return Json(new { success = false, error = "Tàu đích không tồn tại" });
+
+        var newRoom = await _db.Rooms.FindAsync(request.NewRoomId);
+        if (newRoom == null || newRoom.BoatId != request.NewBoatId)
+            return Json(new { success = false, error = "Phòng đích không tồn tại hoặc không thuộc tàu đích" });
+
+        try
+        {
+            var currentBoatId = booking.BoatId;
+            var currentRoomId = booking.BookingRooms.FirstOrDefault()?.RoomId;
+
+            // Set old values
+            booking.BoatIdOld = currentBoatId;
+            booking.RoomIdOld = currentRoomId;
+
+            // Update to new values
+            booking.BoatId = request.NewBoatId;
+
+            // Update booking rooms
+            if (booking.BookingRooms.Any())
+            {
+                foreach (var br in booking.BookingRooms)
+                {
+                    br.RoomId = request.NewRoomId;
+                }
+            }
+
+            _db.Bookings.Update(booking);
+            await _db.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Chuyển tàu thành công" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Manager,BookingStaff")]

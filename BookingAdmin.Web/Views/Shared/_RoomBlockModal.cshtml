@@ -9,9 +9,9 @@
             </div>
             <div class="modal-body">
                 <form id="blockRoomForm">
-                    <!-- Row 1: Boat & Room -->
+                    <!-- Row 1: Boat -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label">Tàu</label>
                             <select id="BlockBoatId" name="BoatId" class="form-select" required>
                                 <option value="">-- Chọn Tàu --</option>
@@ -21,15 +21,23 @@
                                 }
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phòng</label>
-                            <select id="BlockRoomId" name="RoomId" class="form-select" required>
-                                <option value="">-- Chọn Phòng --</option>
-                            </select>
+                    </div>
+
+                    <!-- Row 2: Rooms (Multi-select Checkbox) -->
+                    <div class="mb-3">
+                        <label class="form-label">Phòng</label>
+                        <div id="BlockRoomsList" style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; max-height: 250px; overflow-y: auto;">
+                            <div class="text-muted">Chọn tàu trước</div>
                         </div>
                     </div>
 
-                    <!-- Row 2: From Date & To Date -->
+                    <!-- Selected Rooms Display -->
+                    <div class="mb-3" id="selectedRoomsDiv" style="display: none;">
+                        <label class="form-label">Phòng đã chọn:</label>
+                        <div id="selectedRoomsList" style="background: #f8f9fa; padding: 10px; border-radius: 4px; min-height: 30px;"></div>
+                    </div>
+
+                    <!-- Row 3: From Date & To Date -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Từ Ngày</label>
@@ -104,10 +112,10 @@
 
     async function loadBlockRooms() {
         const boatId = document.getElementById('BlockBoatId').value;
-        const roomSelect = document.getElementById('BlockRoomId');
+        const roomsList = document.getElementById('BlockRoomsList');
 
         if (!boatId) {
-            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            roomsList.innerHTML = '<div class="text-muted">Chọn tàu trước</div>';
             return;
         }
 
@@ -115,22 +123,60 @@
             const response = await fetch(`/api/rooms?boatId=${boatId}`);
             const rooms = await response.json();
 
-            roomSelect.innerHTML = '<option value="">-- Chọn Phòng --</option>';
+            roomsList.innerHTML = '';
+            if (rooms.length === 0) {
+                roomsList.innerHTML = '<div class="text-muted">Không có phòng</div>';
+                return;
+            }
+
             rooms.forEach(room => {
-                const option = document.createElement('option');
-                option.value = room.id;
-                option.textContent = `${room.roomCode} - ${room.roomName}`;
-                roomSelect.appendChild(option);
+                const div = document.createElement('div');
+                div.style.padding = '5px 0';
+                div.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input room-checkbox" type="checkbox" id="room_${room.id}" value="${room.id}" data-room-code="${room.roomCode}" data-room-name="${room.roomName}">
+                        <label class="form-check-label" for="room_${room.id}">
+                            ${room.roomCode} - ${room.roomName}
+                        </label>
+                    </div>
+                `;
+                roomsList.appendChild(div);
+            });
+
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.room-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedRooms);
             });
         } catch (error) {
             console.error('Error loading rooms:', error);
-            roomSelect.innerHTML = '<option value="">-- Lỗi tải phòng --</option>';
+            roomsList.innerHTML = '<div class="text-danger">Lỗi tải phòng</div>';
+        }
+    }
+
+    function updateSelectedRooms() {
+        const selectedCheckboxes = document.querySelectorAll('.room-checkbox:checked');
+        const selectedDiv = document.getElementById('selectedRoomsDiv');
+        const selectedList = document.getElementById('selectedRoomsList');
+
+        if (selectedCheckboxes.length === 0) {
+            selectedDiv.style.display = 'none';
+            selectedList.innerHTML = '';
+        } else {
+            selectedDiv.style.display = 'block';
+            let html = '';
+            selectedCheckboxes.forEach(checkbox => {
+                html += `<span class="badge bg-primary" style="margin-right: 5px;">
+                    ${checkbox.getAttribute('data-room-code')} - ${checkbox.getAttribute('data-room-name')}
+                </span>`;
+            });
+            selectedList.innerHTML = html;
         }
     }
 
     async function saveRoomBlock() {
         const boatId = document.getElementById('BlockBoatId').value;
-        const roomId = document.getElementById('BlockRoomId').value;
+        const selectedCheckboxes = document.querySelectorAll('.room-checkbox:checked');
+        const roomIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
         const fromDate = document.getElementById('BlockFromDate').value;
         const toDate = document.getElementById('BlockToDate').value;
         const partner = document.getElementById('BlockPartner').value || null;
@@ -138,8 +184,8 @@
         const note = document.getElementById('BlockNote').value || null;
 
         // Client-side validation
-        if (!boatId || !roomId || !fromDate || !toDate) {
-            alert('Vui lòng điền các trường bắt buộc');
+        if (!boatId || roomIds.length === 0 || !fromDate || !toDate) {
+            alert('Vui lòng điền các trường bắt buộc và chọn ít nhất 1 phòng');
             return;
         }
 
@@ -154,7 +200,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     boatId: parseInt(boatId),
-                    roomId: parseInt(roomId),
+                    roomIds: roomIds,
                     fromDate: fromDate,
                     toDate: toDate,
                     partner: partner || null,

@@ -108,6 +108,7 @@
                 <th class="text-center">Khách số</th>
                 <th class="text-end">Giá</th>
                 <th>Status</th>
+                <th style="width: 80px;"></th>
             </tr>
         </thead>
         <tbody>
@@ -130,6 +131,14 @@
                         <span class="badge" style="background-color:@b.BookingStatus?.Color">
                             @b.BookingStatus?.Name
                         </span>
+                    </td>
+                    <td style="text-align: center;" onclick="event.stopPropagation();">
+                        @if (b.BookingStatus?.Name != "Cancelled")
+                        {
+                            <button class="btn btn-sm btn-outline-warning" onclick="openTransferModal(@b.Id, '@b.SystemCode', '@b.Boat?.Name', '@(room?.RoomCode ?? "N/A")')" title="Chuyển tàu">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+                        }
                     </td>
                 </tr>
             }
@@ -158,6 +167,9 @@
 
 <!-- Shared Detail Drawer -->
 @await Html.PartialAsync("_BookingDetailDrawer")
+
+<!-- Transfer Boat Modal -->
+@await Html.PartialAsync("_TransferBoatModal", Model.ModalData)
 
 @section Scripts {
     <script src="~/js/booking-shared.js" asp-append-version="true"></script>

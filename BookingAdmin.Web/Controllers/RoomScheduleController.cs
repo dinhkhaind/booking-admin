@@ -329,7 +329,7 @@ public class RoomScheduleController : BaseController
             if (request == null)
                 return Json(new { success = false, error = "Request body is required" });
 
-            if (request.RoomId <= 0 || request.BoatId <= 0)
+            if (request.RoomIds == null || request.RoomIds.Count == 0 || request.BoatId <= 0)
                 return Json(new { success = false, error = "Invalid room or boat" });
 
             if (string.IsNullOrWhiteSpace(request.FromDate) || string.IsNullOrWhiteSpace(request.ToDate))
@@ -344,29 +344,6 @@ public class RoomScheduleController : BaseController
             if (toDate <= fromDate)
                 return Json(new { success = false, error = "ToDate must be after FromDate" });
 
-            // Check for overlapping bookings
-            var hasBookingConflict = await _db.BookingRooms
-                .Include(br => br.Booking)
-                .Where(br => br.RoomId == request.RoomId
-                    && br.Booking.StatusId != 3
-                    && br.Booking.CheckIn.CompareTo(toDate) < 0
-                    && br.Booking.CheckOut.CompareTo(fromDate) > 0)
-                .AnyAsync();
-
-            if (hasBookingConflict)
-                return Json(new { success = false, error = "Phòng đã có booking trong khoảng thời gian này" });
-
-            // Check for overlapping blocks
-            var hasBlockConflict = await _db.RoomBlocks
-                .Where(rb => rb.RoomId == request.RoomId
-                    && rb.IsActive
-                    && rb.FromDate < toDate
-                    && rb.ToDate > fromDate)
-                .AnyAsync();
-
-            if (hasBlockConflict)
-                return Json(new { success = false, error = "Phòng đã bị block trong khoảng thời gian này" });
-
             // Parse deadline if provided and convert to UTC
             DateTime? deadline = null;
             if (!string.IsNullOrWhiteSpace(request.Deadline))
@@ -378,24 +355,55 @@ public class RoomScheduleController : BaseController
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             int.TryParse(userIdString, out int userId);
 
-            var roomBlock = new RoomBlock
-            {
-                BoatId = request.BoatId,
-                RoomId = request.RoomId,
-                FromDate = fromDate,
-                ToDate = toDate,
-                Partner = request.Partner,
-                Deadline = deadline,
-                Note = request.Note,
-                CreatedByUserId = userId > 0 ? userId : null,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
+            var roomBlocks = new List<RoomBlock>();
 
-            _db.RoomBlocks.Add(roomBlock);
+            // Create a block for each selected room
+            foreach (var roomId in request.RoomIds)
+            {
+                // Check for overlapping bookings
+                var hasBookingConflict = await _db.BookingRooms
+                    .Include(br => br.Booking)
+                    .Where(br => br.RoomId == roomId
+                        && br.Booking.StatusId != 3
+                        && br.Booking.CheckIn.CompareTo(toDate) < 0
+                        && br.Booking.CheckOut.CompareTo(fromDate) > 0)
+                    .AnyAsync();
+
+                if (hasBookingConflict)
+                    return Json(new { success = false, error = $"Phòng {roomId} đã có booking trong khoảng thời gian này" });
+
+                // Check for overlapping blocks
+                var hasBlockConflict = await _db.RoomBlocks
+                    .Where(rb => rb.RoomId == roomId
+                        && rb.IsActive
+                        && rb.FromDate < toDate
+                        && rb.ToDate > fromDate)
+                    .AnyAsync();
+
+                if (hasBlockConflict)
+                    return Json(new { success = false, error = $"Phòng {roomId} đã bị block trong khoảng thời gian này" });
+
+                var roomBlock = new RoomBlock
+                {
+                    BoatId = request.BoatId,
+                    RoomId = roomId,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    Partner = request.Partner,
+                    Deadline = deadline,
+                    Note = request.Note,
+                    CreatedByUserId = userId > 0 ? userId : null,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                roomBlocks.Add(roomBlock);
+            }
+
+            _db.RoomBlocks.AddRange(roomBlocks);
             await _db.SaveChangesAsync();
 
-            return Json(new { success = true, id = roomBlock.Id, message = "Block phòng thành công" });
+            return Json(new { success = true, count = roomBlocks.Count, message = $"Block {roomBlocks.Count} phòng thành công" });
         }
         catch (Exception ex)
         {
@@ -463,7 +471,7 @@ public class RoomScheduleController : BaseController
     public class CreateRoomBlockRequest
     {
         public int BoatId { get; set; }
-        public int RoomId { get; set; }
+        public List<int> RoomIds { get; set; } = new();
         public string FromDate { get; set; }
         public string ToDate { get; set; }
         public string Partner { get; set; }

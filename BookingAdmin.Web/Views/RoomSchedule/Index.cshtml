@@ -171,8 +171,11 @@
                     else if (cell.Booking != null && cell.IsStart)
                     {
                         var chipColor = cell.Booking.PackageAddedDate == 1 ? "#d97706" : "#2563eb";
+                        var backgroundStyle = cell.Booking.IsTransferred
+                            ? $"background: linear-gradient(to right, {chipColor} 0%, {chipColor} 70%, #9333ea 70%, #9333ea 100%)"
+                            : $"background: {chipColor}";
                         <div class="sched-cell sched-booking"
-                             style="background:@chipColor; grid-column: span @cell.ColSpan"
+                             style="@backgroundStyle; grid-column: span @cell.ColSpan"
                              onclick="openDetailModal(@cell.Booking.BookingId)">
                             <div class="chip-l1">@cell.Booking.ChannelName</div>
                             <div class="chip-l2">@cell.Booking.PackageCode</div>
@@ -193,6 +196,9 @@
 
 <!-- Shared Detail Drawer -->
 @await Html.PartialAsync("_BookingDetailDrawer")
+
+<!-- Transfer Boat Modal -->
+@await Html.PartialAsync("_TransferBoatModal", Model)
 
 <style>
     /* ── Metric Cards ── */

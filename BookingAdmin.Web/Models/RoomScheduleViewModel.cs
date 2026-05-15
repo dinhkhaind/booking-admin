@@ -55,6 +55,7 @@ public class BookingChipVm
     public int PackageAddedDate { get; set; }
     public string StatusName { get; set; } = string.Empty;
     public string StatusColor { get; set; } = string.Empty;
+    public bool IsTransferred { get; set; }
 }
 
 public class BlockChipVm

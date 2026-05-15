@@ -96,7 +96,8 @@ public class RoomScheduleService
                         PackageCode = booking.Package?.Code ?? "Unknown",
                         PackageAddedDate = booking.Package?.AddedDate ?? 0,
                         StatusName = booking.BookingStatus?.Name ?? "Unknown",
-                        StatusColor = booking.BookingStatus?.Color ?? "#6c757d"
+                        StatusColor = booking.BookingStatus?.Color ?? "#6c757d",
+                        IsTransferred = booking.BoatIdOld.HasValue
                     };
 
                     occupancyMap[startDay] = (chip, true, span, false);
