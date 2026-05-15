@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<SaleEntry> SaleEntries => Set<SaleEntry>();
     public DbSet<UserBoat> UserBoats => Set<UserBoat>();
     public DbSet<RoomBlock> RoomBlocks => Set<RoomBlock>();
+    public DbSet<BoatScheduleEvent> BoatScheduleEvents => Set<BoatScheduleEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -22,6 +22,7 @@ public class RoomScheduleViewModel
     public List<Currency> Currencies { get; set; } = new();
     public List<Package> Packages { get; set; } = new();
     public List<BookingStatus> Statuses { get; set; } = new();
+    public string BoatEventsJson { get; set; } = string.Empty;
 }
 
 public class RoomScheduleRow

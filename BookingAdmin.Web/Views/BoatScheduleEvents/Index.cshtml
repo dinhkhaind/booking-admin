@@ -1,0 +1,246 @@
+@model List<BookingAdmin.Web.Models.BoatScheduleEvent>
+@{
+    ViewData["Title"] = "Quản Lý Sự Kiện Tàu";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Quản Lý Sự Kiện Tàu</h2>
+    <button class="btn btn-primary" onclick="openEventModal()">
+        <i class="bi bi-plus"></i> Thêm Sự Kiện
+    </button>
+</div>
+
+<!-- Events Table -->
+<div class="table-responsive">
+    <table class="table table-sm table-hover table-striped">
+        <thead>
+            <tr>
+                <th>Tàu</th>
+                <th>Loại Sự Kiện</th>
+                <th>Từ Ngày</th>
+                <th>Đến Ngày</th>
+                <th>Lý Do</th>
+                <th style="width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                @foreach (var evt in Model)
+                {
+                    <tr>
+                        <td><strong>@evt.Boat?.Name</strong></td>
+                        <td>
+                            <span class="badge" style="background-color: @(evt.Type == "Downtime" ? "#dc3545" : "#ff9800");">
+                                @(evt.Type == "Downtime" ? "Dừng chạy tàu" : "Phụ thu")
+                            </span>
+                        </td>
+                        <td>@evt.FromDate.ToString("dd/MM/yyyy")</td>
+                        <td>@evt.ToDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <small>@(string.IsNullOrEmpty(evt.Reason) ? "-" : evt.Reason)</small>
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editEvent(@evt.Id)" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteEvent(@evt.Id)" title="Xoá">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        Chưa có sự kiện nào
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm/Sửa Sự Kiện Tàu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <input type="hidden" id="eventId" name="eventId" />
+
+                    <!-- Boat Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Tàu <span class="text-danger">*</span></label>
+                        <select id="eventBoatId" name="boatId" class="form-select" required>
+                            <option value="">-- Chọn Tàu --</option>
+                            @foreach (var boat in (List<BookingAdmin.Web.Models.Boat>)ViewBag.Boats)
+                            {
+                                <option value="@boat.Id">@boat.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Event Type -->
+                    <div class="mb-3">
+                        <label class="form-label">Loại Sự Kiện <span class="text-danger">*</span></label>
+                        <select id="eventType" name="type" class="form-select" required>
+                            <option value="">-- Chọn Loại --</option>
+                            <option value="Downtime">Dừng chạy tàu</option>
+                            <option value="Surcharge">Phụ thu</option>
+                        </select>
+                    </div>
+
+                    <!-- From Date -->
+                    <div class="mb-3">
+                        <label class="form-label">Từ Ngày <span class="text-danger">*</span></label>
+                        <input type="date" id="eventFromDate" name="fromDate" class="form-control" required />
+                    </div>
+
+                    <!-- To Date -->
+                    <div class="mb-3">
+                        <label class="form-label">Đến Ngày <span class="text-danger">*</span></label>
+                        <input type="date" id="eventToDate" name="toDate" class="form-control" required />
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="mb-3">
+                        <label class="form-label">Lý Do</label>
+                        <textarea id="eventReason" name="reason" class="form-control" rows="3" placeholder="Nhập lý do..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-primary" onclick="saveEvent()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentEventId = null;
+
+    function openEventModal() {
+        currentEventId = null;
+        document.getElementById('eventForm').reset();
+        document.getElementById('eventId').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        modal.show();
+    }
+
+    async function editEvent(eventId) {
+        currentEventId = eventId;
+        try {
+            const response = await fetch(`/BoatScheduleEvents/GetEvent?id=${eventId}`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                document.getElementById('eventId').value = result.data.id;
+                document.getElementById('eventBoatId').value = result.data.boatId;
+                document.getElementById('eventType').value = result.data.type;
+                document.getElementById('eventFromDate').value = result.data.fromDate;
+                document.getElementById('eventToDate').value = result.data.toDate;
+                document.getElementById('eventReason').value = result.data.reason || '';
+
+                const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+                modal.show();
+            } else {
+                alert('Lỗi tải dữ liệu sự kiện');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Lỗi: ' + error.message);
+        }
+    }
+
+    async function saveEvent() {
+        const eventId = document.getElementById('eventId').value;
+        const boatId = document.getElementById('eventBoatId').value;
+        const type = document.getElementById('eventType').value;
+        const fromDate = document.getElementById('eventFromDate').value;
+        const toDate = document.getElementById('eventToDate').value;
+        const reason = document.getElementById('eventReason').value || null;
+
+        if (!boatId || !type || !fromDate || !toDate) {
+            alert('Vui lòng điền tất cả các trường bắt buộc');
+            return;
+        }
+
+        try {
+            let url, method, data;
+
+            if (eventId) {
+                // Update
+                url = '/BoatScheduleEvents/Update';
+                method = 'POST';
+                data = {
+                    id: parseInt(eventId),
+                    boatId: parseInt(boatId),
+                    type: type,
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    reason: reason
+                };
+            } else {
+                // Create
+                url = '/BoatScheduleEvents/Create';
+                method = 'POST';
+                data = {
+                    boatId: parseInt(boatId),
+                    type: type,
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    reason: reason
+                };
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                location.reload();
+            } else {
+                alert('Lỗi: ' + (result.error || 'Không rõ lỗi'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Lỗi: ' + error.message);
+        }
+    }
+
+    async function deleteEvent(eventId) {
+        if (!confirm('Bạn có chắc chắn muốn xoá sự kiện này?')) return;
+
+        try {
+            const response = await fetch(`/BoatScheduleEvents/Delete?id=${eventId}`, {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('Lỗi: ' + (result.error || 'Không rõ lỗi'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Lỗi: ' + error.message);
+        }
+    }
+</script>

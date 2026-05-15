@@ -581,6 +581,52 @@
             return;
         }
 
+        // Validate against boat schedule events
+        const checkInDate = new Date(payload.CheckIn);
+        const checkOutDate = new Date(document.getElementById('CheckOut').value);
+        const boatId = payload.BoatId;
+
+        // Check for boat schedule conflicts
+        const boatEventsJson = document.querySelector('[data-boat-events]')?.getAttribute('data-boat-events');
+        if (boatEventsJson && boatEventsJson !== '') {
+            try {
+                const boatEvents = JSON.parse(boatEventsJson);
+                let hasDowntime = false;
+                let surchargeReason = null;
+
+                boatEvents.forEach(event => {
+                    const eventFromDate = new Date(event.fromDate);
+                    const eventToDate = new Date(event.toDate);
+                    eventToDate.setDate(eventToDate.getDate() + 1); // Include end date
+
+                    // Check if booking dates overlap with event
+                    if (checkInDate < eventToDate && checkOutDate > eventFromDate) {
+                        if (event.type === 'Downtime') {
+                            hasDowntime = true;
+                        } else if (event.type === 'Surcharge' && !surchargeReason) {
+                            surchargeReason = event.reason;
+                        }
+                    }
+                });
+
+                if (hasDowntime) {
+                    alert('Tàu dừng hoạt động trong khoảng thời gian này. Vui lòng chọn ngày khác.');
+                    return;
+                }
+
+                if (surchargeReason) {
+                    const bookingNote = document.getElementById('Note');
+                    const currentNote = bookingNote.value;
+                    const surchargeLine = `[Phụ thu] ${surchargeReason}`;
+                    if (!currentNote.includes(surchargeLine)) {
+                        bookingNote.value = currentNote ? currentNote + '\n' + surchargeLine : surchargeLine;
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking boat events:', e);
+            }
+        }
+
         const url = isEditMode ? `/lich-phong/api/bookings/${window.currentEditingBookingId}` : '/lich-phong/api/bookings';
         const method = isEditMode ? 'PUT' : 'POST';
         const successMessage = isEditMode ? 'Booking cập nhật thành công!' : 'Booking tạo thành công!';

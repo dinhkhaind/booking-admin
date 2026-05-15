@@ -47,6 +47,12 @@
                         <span>Lịch Phòng</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center gap-2" asp-controller="BoatScheduleEvents" asp-action="Index">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Sự Kiện Tàu</span>
+                    </a>
+                </li>
                 @if (User.IsInRole("Admin"))
                 {
                     <li class="nav-item">
