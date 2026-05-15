@@ -19,7 +19,106 @@
 </div>
 
 <!-- Current User Data (for modal) -->
-<div class="d-none" data-current-user="@currentUser" data-current-user-id="@currentUserId"></div>
+<div class="d-none" data-current-user="@currentUser" data-current-user-id="@currentUserId" data-boat-events="@Model.BoatEventsJson"></div>
+
+<script>
+    // Parse boat events for calendar
+    let boatEventsMap = {};
+    const boatEventsJson = document.querySelector('[data-boat-events]').getAttribute('data-boat-events');
+    if (boatEventsJson) {
+        try {
+            const boatEvents = JSON.parse(boatEventsJson);
+            boatEvents.forEach(event => {
+                const fromDate = new Date(event.fromDate);
+                const toDate = new Date(event.toDate);
+                for (let d = new Date(fromDate); d <= toDate; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    if (!boatEventsMap[dateStr]) {
+                        boatEventsMap[dateStr] = [];
+                    }
+                    boatEventsMap[dateStr].push({
+                        type: event.type,
+                        reason: event.reason
+                    });
+                }
+            });
+        } catch (e) {
+            console.error('Error parsing boat events:', e);
+        }
+    }
+
+    const selectedYear = @Model.SelectedYear;
+    const selectedMonth = @Model.SelectedMonth;
+    const daysInMonth = @Model.DaysInMonth;
+
+    function getEventForDate(day) {
+        const yearStr = selectedYear.toString().padStart(4, '0');
+        const monthStr = selectedMonth.toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+        return boatEventsMap[dateStr] || null;
+    }
+
+    function handleDateCellClick(e, roomId, day) {
+        const boatEvent = getEventForDate(day);
+        const hasDowntime = boatEvent?.some(evt => evt.type === 'Downtime') ?? false;
+
+        if (hasDowntime) {
+            e.preventDefault();
+            e.stopPropagation();
+            alert('Tàu dừng hoạt động vào ngày này. Vui lòng chọn ngày khác.');
+            return false;
+        }
+
+        openBookingModal(roomId, day);
+        return false;
+    }
+
+    // Apply event colors to day headers and cells on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayEvent = getEventForDate(day);
+            if (dayEvent) {
+                const headerEl = document.getElementById(`day-header-${day}`);
+                if (headerEl) {
+                    if (dayEvent.some(e => e.type === 'Downtime')) {
+                        headerEl.style.backgroundColor = '#e8e8e8';
+                        headerEl.style.cursor = 'not-allowed';
+                    } else if (dayEvent.some(e => e.type === 'Surcharge')) {
+                        headerEl.style.backgroundColor = '#d4edda';
+                        headerEl.style.cursor = 'help';
+                        const reason = dayEvent.find(e => e.type === 'Surcharge')?.reason;
+                        if (reason) {
+                            headerEl.title = 'Phụ thu: ' + reason;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply event colors to empty cells
+        document.querySelectorAll('.sched-empty').forEach(cell => {
+            const day = parseInt(cell.getAttribute('data-day'));
+            const dayEvent = getEventForDate(day);
+            if (dayEvent) {
+                if (dayEvent.some(e => e.type === 'Downtime')) {
+                    cell.style.backgroundColor = '#e8e8e8';
+                    cell.style.cursor = 'not-allowed';
+                    cell.style.pointerEvents = 'none';
+                    const addBtn = cell.querySelector('.cell-add-btn');
+                    if (addBtn) addBtn.style.display = 'none';
+                } else if (dayEvent.some(e => e.type === 'Surcharge')) {
+                    cell.style.backgroundColor = '#d4edda';
+                    cell.style.cursor = 'help';
+                    const reason = dayEvent.find(e => e.type === 'Surcharge')?.reason;
+                    if (reason) {
+                        cell.title = 'Phụ thu: ' + reason;
+                    }
+                }
+            }
+        });
+    });
+</script>
 
 <!-- Filters -->
 <div class="card mb-4">
@@ -126,7 +225,7 @@
                 var dow = date.DayOfWeek;
                 var isWeekend = dow == DayOfWeek.Saturday || dow == DayOfWeek.Sunday;
                 var dayNames = new[] { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
-                <div class="sched-day-header @(isWeekend ? "is-weekend" : "")">
+                <div class="sched-day-header @(isWeekend ? "is-weekend" : "")" id="day-header-@day" data-day="@day">
                     <div class="day-num">@day</div>
                     <div class="day-name">@dayNames[(int)dow]</div>
                 </div>
@@ -156,8 +255,10 @@
                     {
                         <div class="sched-cell sched-empty @(isWeekend ? "is-weekend-col" : "")"
                              style="grid-column: span @cell.ColSpan"
-                             onclick="openBookingModal(@row.RoomId, @cell.Day)">
-                        <span class="cell-add-btn">+</span>     
+                             onclick="return handleDateCellClick(event, @row.RoomId, @cell.Day)"
+                             data-day="@cell.Day"
+                             data-room-id="@row.RoomId">
+                        <span class="cell-add-btn">+</span>
                         </div>
                     }
                     else if (cell.Block != null && cell.IsStart)
@@ -387,6 +488,15 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* ── Tooltip styling ── */
+    [title] {
+        position: relative;
+    }
+    .sched-empty[title]:hover,
+    .sched-day-header[title]:hover {
+        border: 1px dotted #666;
     }
 </style>
 
