@@ -3,11 +3,13 @@ using BookingAdmin.Web.Models;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace BookingAdmin.Web.Controllers;
 
+[AllowAnonymous]
 public class AccountController : Controller
 {
     private readonly AppDbContext _db;

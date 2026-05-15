@@ -1,10 +1,19 @@
 using BookingAdmin.Web.Data;
 using BookingAdmin.Web.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+var authPolicy = new AuthorizationPolicyBuilder()
+    .RequireAuthenticatedUser()
+    .Build();
+
+builder.Services.AddControllersWithViews(opts =>
+{
+    opts.Filters.Add(new AuthorizeFilter(authPolicy));
+});
 
 builder.Services.AddSession(options =>
 {

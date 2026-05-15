@@ -4,9 +4,11 @@ using BookingAdmin.Web.Models;
 using BookingAdmin.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BookingAdmin.Web.Controllers;
 
+[Authorize]
 public class HomeController : BaseController
 {
     public HomeController(AppDbContext db) : base(db) { }
